@@ -28,7 +28,7 @@ export function assertOutput(result: { elements: unknown[]; files?: Record<strin
   }
 }
 
-function assertBindings(elements: { id: string; type: string; boundElements?: readonly { id: string }[] | null; containerId?: string | null; startBinding?: { elementId: string } | null; endBinding?: { elementId: string } | null }[]): void {
+export function assertBindings(elements: { id: string; type: string; boundElements?: readonly { id: string }[] | null; containerId?: string | null; startBinding?: { elementId: string } | null; endBinding?: { elementId: string } | null }[]): void {
   const ids = new Set(elements.map(element => element.id));
   for (const element of elements) {
     if (element.boundElements?.some(binding => !ids.has(binding.id))) throw new FlowchartError('UNSUPPORTED_OUTPUT');
