@@ -7,6 +7,7 @@ import { readPublicOrigin } from './origin.js';
 export const LAN_ROOT = '.inkspire-lan';
 
 function lanOrigin(config: AppConfig): string {
+  if (!config.origin.startsWith('https://')) throw new Error('Konfigurasi LAN production diperlukan.');
   const origin = readPublicOrigin(config.origin);
   if (!origin || config.mode !== 'production') throw new Error('Konfigurasi LAN production diperlukan.');
   return origin;

@@ -15,6 +15,9 @@
     "build": "npm run assets:editor && vite build && tsc -p tsconfig.server.json",
     "dev": "npm run assets:editor && node --env-file-if-exists=.env --import tsx server/index.ts --dev",
     "start": "node --env-file-if-exists=.env dist-server/server/index.js",
+    "lan:config": "node --env-file-if-exists=.env dist-server/server/lan-cli.js --write-only",
+    "lan:serve": "node --env-file-if-exists=.env dist-server/server/lan-cli.js",
+    "test:lan": "node --import tsx tests/network-caddy.ts",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },

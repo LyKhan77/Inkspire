@@ -1,7 +1,8 @@
 import { afterEach, expect, test } from 'vitest';
+import { spawnSync } from 'node:child_process';
 import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { networkInterfaces, tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { readConfig } from '../server/config';
 import { assertLANInterface, caddyEnvironment, prepareLAN, renderCaddyfile } from '../server/lan';
 
@@ -45,4 +46,55 @@ test('prepare writes only project-local private files after interface validation
     expect((await stat(join(root, '.inkspire-lan'))).mode & 0o777).toBe(0o700);
     expect((await stat(path)).mode & 0o777).toBe(0o600);
   }
+});
+
+function cli(root: string, args: string[], env: NodeJS.ProcessEnv) {
+  return spawnSync(process.execPath, [resolve('dist-server/server/lan-cli.js'), ...args], {
+    cwd: root, encoding: 'utf8', env,
+  });
+}
+
+test('CLI invalid interface exits nonzero without exposing credentials or writing config', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'inkspire-lan-cli-')); roots.push(root);
+  const addresses = Object.values(networkInterfaces()).flatMap(items => items ?? []).map(item => item.address);
+  const unusedIP = ['192.168.255.254', '10.255.255.254', '172.31.255.254'].find(ip => !addresses.includes(ip));
+  expect(unusedIP).toBeTruthy();
+  const child = cli(root, ['--write-only'], { PATH: process.env.PATH,
+    INKSPIRE_PUBLIC_ORIGIN: `https://${unusedIP}:8443`, MAPIC_SERVICE_TOKEN: 'SECRET' });
+  expect(child.status).toBe(1);
+  expect(child.stderr).toContain('IP LAN tidak terpasang pada host.');
+  expect(child.stderr).not.toContain('SECRET');
+  await expect(stat(join(root, '.inkspire-lan'))).rejects.toMatchObject({ code: 'ENOENT' });
+});
+
+test('CLI rejects invalid arguments and localhost config before spawning Caddy', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'inkspire-lan-cli-args-')); roots.push(root);
+  const badArg = cli(root, ['--serve-anywhere'], { PATH: process.env.PATH,
+    INKSPIRE_PUBLIC_ORIGIN: 'https://192.168.1.20:8443' });
+  expect(badArg.status).toBe(1);
+  expect(badArg.stderr).toContain('Argumen LAN tidak valid.');
+  const noLAN = cli(root, ['--write-only'], { PATH: process.env.PATH });
+  expect(noLAN.status).toBe(1);
+  expect(noLAN.stderr).toContain('Konfigurasi LAN production diperlukan.');
+  expect(noLAN.stderr).not.toContain('undefined');
+  await expect(stat(join(root, '.inkspire-lan'))).rejects.toMatchObject({ code: 'ENOENT' });
+});
+
+test('CLI write-only creates config and never starts Caddy', async () => {
+  const addresses = Object.values(networkInterfaces()).flatMap(items => items ?? [])
+    .filter(item => item.family === 'IPv4').map(item => item.address);
+  const lanIP = addresses.find(ip => ['10.', '192.168.', '172.'].some(prefix => ip.startsWith(prefix))
+    && !ip.startsWith('169.254.'));
+  if (!lanIP) return; // No private IPv4 interface available in this environment.
+  const root = await mkdtemp(join(tmpdir(), 'inkspire-lan-cli-ok-')); roots.push(root);
+  const child = cli(root, ['--write-only'], { PATH: process.env.PATH,
+    INKSPIRE_PORT: '4193', INKSPIRE_PUBLIC_ORIGIN: `https://${lanIP}:18443`,
+    MAPIC_SERVICE_TOKEN: 'SECRET' });
+  expect(child.status).toBe(0);
+  expect(child.stdout).toContain(`https://${lanIP}:18443`);
+  expect(child.stdout).not.toContain('SECRET');
+  const text = await readFile(join(root, '.inkspire-lan/Caddyfile'), 'utf8');
+  expect(text).toContain(`bind ${lanIP}`);
+  expect(text).toContain('reverse_proxy 127.0.0.1:4193');
+  expect(text).not.toContain('SECRET');
 });
