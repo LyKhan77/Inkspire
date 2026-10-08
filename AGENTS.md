@@ -8,7 +8,7 @@ Inkspire adalah canvas pribadi berbasis Excalidraw dengan generation gambar mela
 
 Repository: [LyKhan77/Inkspire](https://github.com/LyKhan77/Inkspire). Remote Git: `https://github.com/LyKhan77/Inkspire.git`.
 
-Browser menjalankan editor React. Companion Node.js bind ke `127.0.0.1:4173` secara default, menyajikan frontend dan API pada satu origin, serta melindungi token service MaPic. Setiap pengguna menjalankan companion lokal; MVP belum menyediakan layanan multiuser publik.
+Browser menjalankan editor React. Companion Node.js bind ke `127.0.0.1:4173` secara default, menyajikan frontend dan API pada satu origin, serta melindungi token service MaPic. Setiap pengguna menjalankan companion lokal; MVP belum menyediakan layanan multiuser publik. Mode production opsional tambahan membuka satu canonical HTTPS origin LAN melalui Caddy di depan companion, tanpa mengubah bind loopback companion; lihat [docs/network-access.md](docs/network-access.md).
 
 Desain sistem lengkap: [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -85,6 +85,9 @@ Prefix seluruh perintah shell yang dijalankan agent dengan `rtk`. Gunakan `rtk p
 | Unit/HTTP | `rtk npm test` |
 | Build frontend dan companion | `rtk npm run build` |
 | Jalankan hasil build | `rtk npm start` |
+| Tulis Caddyfile LAN | `rtk npm run lan:config` |
+| Jalankan proxy LAN foreground | `rtk npm run lan:serve` |
+| Gate Caddy HTTPS terisolasi | `rtk npm run test:lan` |
 | Instal browser tes | `rtk proxy npx playwright install chromium` |
 | E2E development | `rtk npm run test:e2e` |
 | E2E compiled production | `rtk proxy env INKSPIRE_TEST_MODE=production npm run test:e2e` |
@@ -118,7 +121,7 @@ Setelah perubahan, jalankan pemeriksaan yang relevan, perbarui dokumentasi terda
 
 Sumber riwayat perubahan: [CHANGELOG.md](CHANGELOG.md). Evidence pemeriksaan: [docs/verification.md](docs/verification.md). Periksa kedua dokumen sebelum menyimpulkan status implementasi atau pengujian.
 
-Saat dokumen ini dibuat, MVP, outline properti aktif, bahasa Indonesia/English, tema tinta mengembang, dan Flowchart lokal tanpa AI telah tersedia. T2I MaPic nyata telah berhasil; I2I memiliki verifikasi mock. Perubahan setelah implementasi awal `0.1.0` dicatat pada bagian **Unreleased**. Hasil tes historis tidak menggantikan verifikasi perubahan baru.
+Saat dokumen ini dibuat, MVP, outline properti aktif, bahasa Indonesia/English, tema tinta mengembang, Flowchart lokal tanpa AI, dan akses LAN HTTPS opsional telah tersedia. Gate otomatis LAN terverifikasi pada loopback; sign-off perangkat nyata masih pending. T2I MaPic nyata telah berhasil; I2I memiliki verifikasi mock. Perubahan setelah implementasi awal `0.1.0` dicatat pada bagian **Unreleased**. Hasil tes historis tidak menggantikan verifikasi perubahan baru.
 
 Lisensi repository adalah [Apache-2.0](LICENSE), dipilih pengguna. Notice dependency/font tersedia di [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Jangan mengubah lisensi atau menyatakan release/publikasi telah terjadi tanpa keputusan dan evidence yang sesuai.
 
@@ -153,6 +156,7 @@ Lisensi repository adalah [Apache-2.0](LICENSE), dipilih pengguna. Notice depend
 
 - Simpan `MAPIC_BASE_URL` dan `MAPIC_SERVICE_TOKEN` hanya pada backend. `.env.example` harus bebas nilai operator; `.env` tidak boleh masuk Git atau bundle browser.
 - Pertahankan companion loopback, validasi origin/body/gambar, satu request aktif, dan error tersanitasi. Jangan menambahkan retry otomatis, job/status/admin endpoint, atau cancel GPU tanpa perubahan desain yang disetujui.
+- Proxy LAN bersifat opsional dan production-only: canonical origin tunggal, bind IP LAN eksplisit tanpa wildcard/HTTP fallback, child Caddy memakai environment whitelist tanpa kredensial MaPic, PKI/config lokal tetap ignored, dan trust CA device tetap tindakan manual operator. Jangan mengaktifkan listener LAN atau memasang trust store secara otomatis.
 - Gunakan mock terisolasi untuk suite otomatis. Generation GPU nyata memerlukan instruksi eksplisit pengguna; izin untuk satu tes tidak berarti menjalankan generation otomatis pada tugas berikutnya.
 - Perubahan proyek/server MaPic, push, merge, publikasi, dan tindakan destruktif membutuhkan instruksi yang mencakup tindakan tersebut. Keberadaan URL remote sendiri tidak berarti permintaan push.
 - Jangan mengasumsikan proses server, PID, URL preview, atau hasil gate sesi lama masih berlaku; periksa bila diperlukan untuk tugas aktif.

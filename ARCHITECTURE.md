@@ -29,6 +29,17 @@ flowchart LR
 
 Companion bind hanya ke `127.0.0.1`, dengan port default `4173`. Browser dan API Inkspire memakai satu origin. Pengguna lain menjalankan companion pada perangkatnya sendiri; implementasi ini belum menyediakan layanan web publik dengan akun pengguna.
 
+Mode LAN opsional menambah satu proxy HTTPS di depan companion tanpa mengubahnya:
+
+```mermaid
+flowchart LR
+    D[Browser device LAN] -->|HTTPS pada IP interface eksplisit| C[Caddy: CA internal lokal]
+    C -->|HTTP 127.0.0.1:4173| N[Companion production]
+    N --> F[Frontend dari dist]
+```
+
+`INKSPIRE_PUBLIC_ORIGIN` kosong berarti default localhost. Saat diisi, origin tersebut menjadi canonical origin tunggal: companion tetap bind loopback, Guard Host/Origin memakai origin itu, dan Caddy meneruskan Host serta Origin browser apa adanya ke upstream. Admin API Caddy dimatikan, auto-HTTPS redirect dimatikan, dan hanya IP LAN eksplisit yang di-bind; tidak ada wildcard, alias localhost, atau listener tambahan. Config dan PKI lokal tinggal pada `.inkspire-lan/` yang dikecualikan dari Git, di luar `dist`/`public`, dengan folder `0700` dan file `0600` pada POSIX. Child Caddy menerima environment whitelist tanpa `MAPIC_BASE_URL` maupun `MAPIC_SERVICE_TOKEN`.
+
 MaPic merupakan layanan terpisah yang dapat diakses melalui jaringan. Token service hanya berada di environment companion. Browser tidak menerima token atau menentukan URL downstream melalui request.
 
 ## Stack dan struktur
@@ -93,7 +104,7 @@ Pergantian bahasa dan tema tidak meremount editor. Bahasa `id`/`en` diterapkan p
 
 Draft berisi `schemaVersion`, `workspaceId`, `revision`, `name`, `sceneJSON`, viewport, dan waktu pembaruan. Scene memakai format native Excalidraw dengan aset gambar tertanam. Satu draft aktif disimpan; belum ada daftar banyak workspace atau arsip hasil AI.
 
-Pemisahan storage mengikuti profil browser dan origin, termasuk scheme, hostname, serta port. `localhost:4173` dan `127.0.0.1:4173` memiliki storage berbeda. Dua pengguna pada profil browser dan origin yang sama memakai draft yang sama. Beberapa tab juga berbagi storage; aplikasi belum menyediakan resolusi konflik antartab.
+Pemisahan storage mengikuti profil browser dan origin, termasuk scheme, hostname, serta port. `localhost:4173` dan `127.0.0.1:4173` memiliki storage berbeda. Origin HTTPS LAN juga punya storage sendiri, sehingga `http://127.0.0.1:4173` dan `https://192.168.1.20:8443` tidak berbagi draft; IP atau port LAN yang berubah membuat origin storage baru lain. Perpindahan kerja dilakukan lewat export/import `.excalidraw`, tanpa migrasi atau sinkronisasi otomatis. Dua pengguna pada profil browser dan origin yang sama memakai draft yang sama. Beberapa tab juga berbagi storage; aplikasi belum menyediakan resolusi konflik antartab.
 
 Autosave menggunakan debounce 250 ms dan antrean penulisan serial. Snapshot disalin sebelum dijadwalkan. Epoch pergantian workspace serta revision mencegah penulisan terjadwal lama dan status save lama mengambil alih workspace baru. Status tersimpan baru diberikan setelah transaksi IndexedDB selesai.
 
@@ -121,6 +132,8 @@ sequenceDiagram
 ```
 
 State AI berjalan melalui `idle`, `preparing`, `pending`, kemudian `success` atau `error`. Request blocking menghasilkan satu PNG. UI menampilkan waktu tunggu, tanpa progress persen, polling job, atau cancel GPU.
+
+Slot `active` bersifat global per companion, bukan per browser: pada mode LAN semua device berbagi satu slot dan request kedua menerima `409 REQUEST_ACTIVE` sampai request pertama selesai. Disconnect browser tidak melepas slot lebih awal karena flag dilepas pada jalur settle request.
 
 Referensi dari upload atau seleksi canvas diproses menjadi salinan PNG/JPEG sesuai batas ukuran. Aset sumber tetap utuh. Companion memvalidasi ulang input dan decode gambar penuh sebelum mengirimnya ke MaPic.
 
@@ -208,7 +221,7 @@ Error downstream tidak diteruskan mentah. Respons lokal membawa `code`, pesan ap
 - Flowchart tidak menambah permukaan jaringan: tidak ada endpoint baru, dan tidak ada permintaan model, MaPic, cloud, atau CDN pada alur tersebut. Preview dibuat dari elemen native hasil export editor, bukan dari SVG/HTML mentah pengguna.
 - Kedua jalur native text-to-diagram dan Mermaid dialihkan ke validator Inkspire yang sama, sehingga tidak ada entry editor yang menyisipkan diagram tanpa pemeriksaan batas.
 
-Validasi localhost membatasi akses request; aplikasi belum menyediakan autentikasi pengguna, kontrol akses berbasis akun, atau enkripsi storage browser. HTTP menuju MaPic juga tidak mengenkripsi Bearer; gunakan HTTPS atau transport terlindungi sesuai lingkungan jaringan.
+Validasi localhost membatasi akses request; aplikasi belum menyediakan autentikasi pengguna, kontrol akses berbasis akun, atau enkripsi storage browser. Mode LAN menambah listener HTTPS di luar companion, sehingga guard origin tetap membatasi request ke canonical origin tersebut dan bukan autentikasi identitas user. Header `Forwarded`/`X-Forwarded-*` tidak menjadi sumber izin origin. HTTP menuju MaPic juga tidak mengenkripsi Bearer; gunakan HTTPS atau transport terlindungi sesuai lingkungan jaringan.
 
 ## Development, production, dan pengujian
 
@@ -217,6 +230,8 @@ Pada development, companion memasang Vite middleware dan HMR pada HTTP server ya
 `dev` dan `build` menjalankan penyalinan aset editor serta notice dependency. Tidak ada service worker atau paket desktop pada implementasi sekarang.
 
 Unit/HTTP menggunakan Vitest dan fake-indexeddb. E2E Chromium memakai companion `4183` dan mock MaPic `4184`, dengan token sentinel khusus tes. Harness tidak membaca `.env` operator dan tidak memiliki fallback ke GPU nyata. Mode production menjalankan entry companion hasil compilation dengan environment tes eksplisit.
+
+`npm run lan:config` menulis Caddyfile dari konfigurasi backend yang sama tanpa menjalankan proxy, dan `npm run lan:serve` menulis ulang konfigurasi lalu menjalankan `caddy run` di foreground. `npm run test:lan` adalah gate executable terpisah yang memakai Caddy asli, storage sementara, listener loopback, dan mock MaPic; suite default tidak bergantung pada binary Caddy dan gate tersebut gagal eksplisit bila executable tidak tersedia.
 
 T2I nyata telah berhasil pada 8 Oktober 2026; I2I memiliki verifikasi melalui mock. Evidence dan batas cakupan tersedia di [verifikasi](docs/verification.md). Pengujian browser saat ini mencakup Chromium; fallback tema tersedia untuk browser tanpa View Transition API.
 

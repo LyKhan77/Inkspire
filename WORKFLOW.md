@@ -29,6 +29,7 @@ Jika `.env` belum ada, salin [.env.example](.env.example) menjadi `.env`. Pertah
 | Variable | Pengisian |
 | --- | --- |
 | `INKSPIRE_PORT` | Port lokal, default `4173` |
+| `INKSPIRE_PUBLIC_ORIGIN` | Opsional, HTTPS LAN production seperti `https://192.168.1.20:8443`; kosong berarti localhost |
 | `MAPIC_BASE_URL` | URL backend MaPic HTTP/HTTPS |
 | `MAPIC_SERVICE_TOKEN` | Nilai token service yang sama dengan backend MaPic aktif, tanpa prefix `Bearer` |
 
@@ -37,6 +38,18 @@ Token service berbeda dari JWT pengguna dan Supabase service-role key. Token han
 Script startup memuat `.env` melalui Node.js `--env-file-if-exists`. Konfigurasi dibaca sekali saat startup, relatif terhadap direktori kerja. Environment shell memiliki prioritas atas file. Setelah perubahan, hentikan companion dengan `Ctrl+C`, lalu jalankan ulang `npm run dev` atau `npm start`. Refresh browser tidak memuat ulang konfigurasi backend. Perilaku loading tersebut mengikuti [dokumentasi CLI Node.js](https://nodejs.org/docs/latest-v24.x/api/cli.html#--env-filefile).
 
 Canvas, draft, import/save, dan export tetap dapat digunakan ketika konfigurasi AI kosong.
+
+### Akses LAN opsional
+
+Untuk device lain pada LAN yang sama, isi `INKSPIRE_PUBLIC_ORIGIN` dengan HTTPS dan IPv4 privat host, lalu jalankan dua proses production:
+
+```sh
+npm run build
+npm run lan:config   # menulis Caddyfile dari konfigurasi yang sama
+npm run lan:serve    # menjalankan caddy run di foreground
+```
+
+Origin LAN hanya berlaku untuk mode production dan selalu memerlukan CA internal Caddy yang dipasang manual pada device. Detail setup, trust, storage per origin, troubleshooting, dan rollback ada di [panduan LAN HTTPS](docs/network-access.md).
 
 ## Alur workspace
 
@@ -191,6 +204,9 @@ Instalasi Chromium diperlukan pada setup pertama atau ketika versi browser Playw
 | Build | Aset lokal, bundle frontend, companion compiled |
 | E2E dev | Workflow browser dengan companion development |
 | E2E production | Workflow browser dengan entry compiled dan `dist` |
+| LAN proxy | `npm run test:lan`: Caddy asli pada listener loopback, TLS terverifikasi, guard origin, mock generation |
+
+Gate `npm run test:lan` memerlukan executable `caddy` di PATH dan gagal eksplisit bila tidak tersedia. Suite default tidak bergantung pada Caddy.
 
 Harness memakai port `4183` untuk app dan `4184` untuk mock. Port yang sedang digunakan menyebabkan kegagalan; `reuseExistingServer` dimatikan. Tes tidak memakai server dev pengguna, `.env` operator, atau GPU nyata. Jalankan build sebelum E2E production.
 

@@ -207,3 +207,66 @@ Suite Flowchart sekarang: unit `model` 8, `text` 11, `mermaid` 39, `insert` 4; E
 - Pengecualian geometri `redo` adalah perilaku Excalidraw 0.18.1 pada jalur replay sejarah. Yang terukur: tiga siklus undo→redo pada scene yang sama, delta terbesar dari insertion `arrow.width` 3,002894287382631 px; siklus kedua dan ketiga tidak menambah delta di atas `1e-9` pada kasus itu, jadi tidak terlihat drift berakumulasi; keenam panah tetap `points[0] === [0, 0]` pada tiap replay dan geometri node tidak bergeser. Tahap mutation, reload, import, aset, dan bahasa tetap dibandingkan ketat. Batas ini menerima keterbatasan pada contoh dan versi saat ini: ini bukan bukti bahwa undo→redo identik dengan insertion, bukan jaminan untuk seluruh graph, dan bukan bukti bahwa penyesuaian tersebut mustahil diperbaiki di sisi aplikasi.
 - Pada dua tes yang melakukan drag lalu download, satu log internal Chromium (`Blocked attempt to show a 'beforeunload' confirmation panel`) dikecualikan lewat pola eksplisit karena berasal dari browser saat download harness bertemu guard beforeunload aplikasi. `Linear element is not normalized` tidak termasuk yang dikecualikan dan tidak pernah muncul.
 - `structuredClone` sebelum `convertToExcalidrawElements` dihapus karena 0.18.1 sudah melakukan `cloneJSON(elementsSkeleton)` di dalam fungsi tersebut, sehingga skeleton preview tidak pernah dimutasi dan salinan kita hanya biaya tambahan.
+
+## Akses LAN HTTPS — 8 Oktober 2026
+
+Implementasi pada branch `feat/network-access`. Hasil di bawah adalah gate otomatis yang benar-benar dijalankan pada sesi ini; sign-off perangkat nyata dicatat terpisah dan masih **pending**.
+
+### Gate otomatis
+
+| Gate | Hasil aktual |
+| --- | --- |
+| `rtk npm run typecheck` | Exit 0; client, server, dan tests |
+| `rtk npm test` | Exit 0 — 118 tests pada 17 files, durasi 978 ms |
+| `rtk npm run build` | Exit 0; frontend built in 1,53 detik; companion compiled |
+| `rtk npm run test:e2e` (development) | Exit 0 — 46 tests, 1,6 menit |
+| `rtk proxy env INKSPIRE_TEST_MODE=production npm run test:e2e` | Exit 0 — 45 lulus + 1 di-skip, 56,0 detik |
+| `rtk git diff --check` | Exit 0; tanpa whitespace error |
+
+Unit LAN tambahan: `tests/network-origin.test.ts` 4 tests, `tests/network-companion.test.ts` 4 tests, `tests/network-config.test.ts` 7 tests. Suite default tidak memerlukan executable Caddy.
+
+### Gate Caddy nyata — belum dijalankan
+
+`rtk npm run test:lan` **tidak dapat dijalankan** pada mesin ini: executable `caddy` tidak ada di PATH (`which caddy` kosong). Gate gagal cepat dan eksplisit dengan pesan `Caddy executable required for test:lan` dan exit 1, sesuai kontrak plan; fixture dihapus bersih dan tidak ada listener tersisa. Script Inkspire tidak memasang binary global secara otomatis, sehingga instalasi Caddy adalah keputusan operator.
+
+Karena binary belum ada, bukti berikut **belum** tersedia dan tidak boleh dianggap lulus: adaptasi/validasi config lewat Caddy, verifikasi rantai TLS dan hostname, penolakan CA salah dengan kode error TLS, asset frontend melalui TLS, dan shutdown child saat foreground. Harness `tests/network-caddy.ts` sudah ditulis lengkap dan typecheck lulus, tetapi belum dieksekusi sampai Caddy terpasang.
+
+Versi Caddy yang dipakai gate: **belum tercatat** karena executable tidak tersedia.
+
+### Negative control yang dijalankan
+
+| Mutasi sementara | Hasil |
+| --- | --- |
+| `server/app.ts`: hapus preservasi origin HTTPS setelah `listen()` | `tests/network-companion.test.ts` gagal 2 tests (`preserve HTTPS origin…`, `two clients share one generation slot`) |
+| `server/lan.ts`: `bind` diganti `0.0.0.0` | `tests/network-config.test.ts` gagal pada `explicit interface and no implicit localhost or wildcard fallback` |
+
+Kedua mutasi hanya berlaku pada working diff, dijalankan pada working diff, lalu hunk dipulihkan tepat. Working tree kembali hijau setelah tiap mutasi dan tidak ada hasil mutasi yang di-commit.
+
+### Bukti runtime lain
+
+- Listener companion tetap `127.0.0.1` dengan origin HTTPS kanonis dipertahankan; origin default localhost memakai port ephemeral aktual dari `server.address()`.
+- Guard: Host salah, Origin `http://` pada port sama, Origin IP berbeda, Origin `null`, dan kombinasi `X-Forwarded-Host`/`X-Forwarded-Proto`/`Forwarded` semuanya ditolak 403 tanpa menyentuh mock.
+- Slot generation global per companion: request kedua 409 `REQUEST_ACTIVE` dan jumlah call mock tidak bertambah.
+- Path privat `/.inkspire-lan/Caddyfile`, `/.inkspire-lan/data/pki/authorities/local/root.key`, dan `/.env` tetap 404.
+- CLI: IP tidak terpasang keluar nonzero dengan `IP LAN tidak terpasang pada host.` dan tidak menulis folder `.inkspire-lan`; argument tak dikenal keluar nonzero; konfigurasi localhost keluar nonzero dengan `Konfigurasi LAN production diperlukan.`; tanpa Caddy di PATH, `lan:serve` keluar 1 dengan pesan ringkas; `--write-only` keluar 0 tanpa menjalankan Caddy. Folder `.inkspire-lan` ditulis mode `0700` dan Caddyfile mode `0600`.
+- Child Caddy menerima environment whitelist: `MAPIC_BASE_URL`, `MAPIC_SERVICE_TOKEN`, dan secret lain tidak ikut; `XDG_DATA_HOME`/`XDG_CONFIG_HOME` diarahkan ke `.inkspire-lan`.
+- `git check-ignore` mengonfirmasi `.inkspire-lan/Caddyfile` dan `.inkspire-lan/data/pki/authorities/local/root.key` tidak pernah masuk Git.
+
+### Sign-off perangkat nyata — pending
+
+Belum ada device/browsers yang menguji mode LAN. Skenario yang tersisa:
+
+| Skenario manual | Expected |
+| --- | --- |
+| Buka URL LAN pada dua device setelah CA dipercaya | Tidak ada warning TLS; `window.isSecureContext === true` |
+| `crypto.randomUUID()` dan `crypto.subtle.digest` pada origin LAN | Keduanya tersedia tanpa warning |
+| Buat rectangle/teks, reload pada device A | Draft A restore; device B tetap punya draft sendiri |
+| Export A → import B | Scene dan aset tetap editable; tidak ada auto-sync |
+| Flowchart → preview → insertion → undo/redo | Bentuk dan konektor native normal |
+| Upload PNG/JPEG lalu generate dengan mock | Referensi ter-hash, preview dan insertion benar |
+| Dua browser generate saat mock di-hold | Keduanya menerima 409; hanya satu call mock sampai release |
+| Bahasa dan ikon Ink | Pergantian bahasa/tema berfungsi; canvas tetap ada |
+| Origin/IP salah dan URL sensitif | Ditolak; data privat tidak disajikan |
+| Kembali ke localhost setelah stop | Runtime pulih; draft tiap origin tetap tersimpan |
+
+Nilai IP interface, port companion, dan port proxy harus dipilih pengguna, begitu juga pemasangan trust certificate pada device. Harness `tests/start-lan-acceptance.ts` menyiapkan instance terisolasi dengan CA acceptance sendiri; CA acceptance berbeda dari CA production dan trust device tetap tindakan manual.

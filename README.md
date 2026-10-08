@@ -41,6 +41,10 @@ npm run dev
 
 Vite berjalan sebagai middleware pada companion, sehingga canvas, draft, dan API berada pada satu origin. Jangan memakai server Vite terpisah untuk workspace normal.
 
+## Akses LAN opsional
+
+Device lain pada Wi-Fi/LAN yang sama dapat membuka Inkspire production melalui `https://<IP-LAN-host>:8443`. Companion tetap loopback; Caddy memegang satu listener HTTPS pada IP interface eksplisit dengan CA internal lokal yang trust device dipasang manual. Ikuti [panduan LAN HTTPS](docs/network-access.md) untuk setup, sertifikat, troubleshooting, dan rollback.
+
 ## Konfigurasi MaPic
 
 Canvas, draft, file, dan export dapat dipakai tanpa konfigurasi MaPic. Untuk mengaktifkan generation, salin `.env.example` menjadi `.env` lalu isi konfigurasi backend sendiri:
@@ -48,6 +52,7 @@ Canvas, draft, file, dan export dapat dipakai tanpa konfigurasi MaPic. Untuk men
 | Variable | Kegunaan |
 | --- | --- |
 | `INKSPIRE_PORT` | Port lokal, default `4173` |
+| `INKSPIRE_PUBLIC_ORIGIN` | Opsional, origin HTTPS LAN production; kosong berarti localhost |
 | `MAPIC_BASE_URL` | URL backend MaPic HTTP/HTTPS |
 | `MAPIC_SERVICE_TOKEN` | Kredensial mesin MaPic |
 
