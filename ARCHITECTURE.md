@@ -39,6 +39,7 @@ Versi dependency dipin di [package.json](package.json) dan [package-lock.json](p
 | --- | --- | --- |
 | Antarmuka | React, TypeScript, CSS, Tabler Icons | Shell, panel AI, dialog, bahasa, tema |
 | Canvas | Excalidraw | Elemen, gambar, seleksi, konektor, viewport, undo/redo |
+| Flowchart lokal | Mermaid dan `@excalidraw/mermaid-to-excalidraw` | Rendering subset flowchart menjadi elemen native, berjalan di browser |
 | Penyimpanan | IndexedDB dan localStorage native | Draft serta preferensi lokal |
 | Companion | Node.js HTTP/HTTPS native | Penyajian app, validasi, transport MaPic |
 | Decode gambar backend | Sharp | Validasi format, dimensi, dan decode penuh |
@@ -52,6 +53,7 @@ src/
   app.css                  Token visual, layout, outline, dan animasi
   features/
     editor/                Adapter Excalidraw, insertion PNG, tema, bahasa
+    flowchart/             Parser teks/Mermaid, graph, converter, dialog, insertion
     workspace/             Draft, autosave, file, import/export, dialog
     ai/                    Kontrak, request, referensi, state, panel AI
 server/
@@ -71,7 +73,7 @@ docs/                      Kontrak, evidence verifikasi, dan plan historis
 
 ## Ownership state dan editor
 
-`App` memiliki `useWorkspace` dan `useGeneration`. Panel AI hanya menampilkan state generation, sehingga menutup panel mempertahankan prompt, referensi, request aktif, dan preview selama halaman tetap terbuka.
+`App` memiliki `useWorkspace`, `useGeneration`, dan `useFlowchart`. Panel AI hanya menampilkan state generation, sehingga menutup panel mempertahankan prompt, referensi, request aktif, dan preview selama halaman tetap terbuka. Dialog Flowchart juga hanya view: input, tab, arah, preview, dan token invalidasi dimiliki controller di `App`.
 
 Excalidraw tetap menjadi pemilik perilaku drawing dan history. Adapter editor meneruskan perubahan scene serta aset ke workspace. Menambahkan PNG memakai API native dengan capture history langsung, sehingga insertion dapat di-undo.
 
@@ -126,6 +128,53 @@ Preview menjadi aset workspace setelah pengguna memilih **Tambahkan ke canvas**.
 
 MaPic service tidak membuat history atau upload Supabase untuk request Inkspire. Aplikasi MaPic secara keseluruhan tetap memiliki kebutuhan konfigurasi tersendiri, termasuk konfigurasi startup Supabase; hal itu berada di luar repository ini.
 
+## Jalur Flowchart
+
+```text
+structured text / bounded Mermaid → FlowGraph → canonical Mermaid → local converter → native preview → additive scene insertion
+```
+
+Fitur berjalan sepenuhnya di browser. Tidak ada endpoint baru, API key, panggilan model bahasa, request MaPic, atau sumber daya CDN. Yang berubah hanya penyajian aset lokal yang sudah ada.
+
+| Modul | Tanggung jawab |
+| --- | --- |
+| `flowchart/model.ts` | Kontrak `FlowGraph`, batas, `FlowchartError`, builder, dan warning struktur |
+| `flowchart/text.ts` | Grammar langkah/kondisi Indonesia/English, merge label, `@ref`, dua spasi untuk cabang |
+| `flowchart/mermaid.ts` | Parser subset flowchart, entity decoding, dan serializer Mermaid kanonik |
+| `flowchart/convert.ts` | Import lazy converter, validasi output, dan Blob preview PNG |
+| `flowchart/insert.ts` | ID/binding baru, offset pusat viewport, group, metadata, dan satu updateScene |
+| `flowchart/useFlowchart.ts` | Input, tab, arah, token revision, guard workspace/API, dan cleanup object URL |
+| `flowchart/FlowchartDialog.tsx` | Dialog, tab, preview, warning, salin kode, fokus/Escape |
+
+Input apa pun tidak pernah diteruskan langsung ke renderer. Parser menghasilkan graph tervalidasi, lalu serializer menulis ulang Mermaid kanonik dengan ID internal dan escaping entity; hanya teks kanonik itulah yang dikonversi. Karena itu statement, style, callback, subgraph, HTML, markdown, dan tipe diagram lain tidak punya jalur masuk. Mermaid 11 memakai `securityLevel` default `strict` dan array `secure` melindungi nilai itu dari override lewat direktif `%%{init}%%`; wrapper converter 2.2.2 tidak mendeklarasikan opsi keamanan sendiri, sehingga boundary input kanonik tetap menjadi pertahanan utama dan dibuktikan ulang oleh tes browser adversarial.
+
+Converter dapat jatuh ke gambar SVG untuk diagram yang tidak dikenali. `assertOutput` menolak hasil bertipe di luar rectangle/diamond/ellipse/text/arrow/line, hasil berafile, element ber-link, koordinat nonfinite, serta jumlah elemen di atas batas, sehingga diagram asing tidak pernah diam-diam menjadi gambar.
+
+### Batas flowchart
+
+| Batas | Nilai |
+| --- | --- |
+| Input tiap tab | 8.000 UTF-16 code units |
+| Baris nonkosong | 200 |
+| Node / edge | 50 / 100 |
+| Label node dan edge | 120 code units |
+| Mermaid kanonik | 64.000 code units |
+| Elemen native hasil converter | 350 |
+
+Error memblokir preview dan menampilkan nomor baris. Warning (`NO_START`, `UNREACHABLE`, `DECISION_BRANCHES`, `DEAD_END`) bersifat nonblocking. Cycle dan self-loop sah. Pemeriksaan ini membuktikan struktur, bukan kebenaran logika engineering.
+
+### Integrasi editor dan lifecycle
+
+Entry Inkspire memakai ekspor publik `TTDDialogTrigger` dengan label dan ikon sendiri. Excalidraw 0.18.1 menempelkan badge AI tetap pada item tersebut, sehingga satu selector CSS yang diskop pada marker entry Flowchart menyembunyikannya; tidak ada patch vendor atau penyisipan DOM. Adapter `Editor.onChange` menangkap `openDialog.name === 'ttd'` untuk tab `text-to-diagram` maupun `mermaid`, menutup state native dengan `CaptureUpdateAction.NEVER` (tanpa entri undo), lalu membuka dialog Inkspire. Entri **Mermaid to Excalidraw** bawaan karena itu tidak lagi menyisipkan sendiri; keduanya memakai validator yang sama. Guard command palette yang lama tetap ada.
+
+Insertion bersifat aditif: scene saat ini (termasuk elemen `isDeleted`) disalin, skeleton dinormalisasi ulang dengan `regenerateIds` agar ID dan binding baru, seluruh elemen digeser ke pusat viewport, diberi satu `groupIds` diagram, dan dikirim lewat satu `updateScene` dengan `CaptureUpdateAction.IMMEDIATELY` sehingga menjadi satu langkah undo. Scene, history, aset, dan diagram lama tidak direset atau diganti.
+
+Setiap conversion membawa token revision, workspace ID, dan referensi editor API. Edit input/tab/arah, closing, unmount, atau penggantian workspace menginvalidasi token tersebut; kerja lokal yang sudah berjalan boleh selesai tetapi hasilnya tidak dipublikasikan dan tidak dibuatkan object URL. `workspaceId` reaktif di `useWorkspace` hanyalah mirror observable dari `identity.current` agar render ikut berubah ketika file bernama sama diganti; pemeriksaan terakhir selalu membaca `identity.current`. Blob URL preview direvoke saat diganti, dibuang, atau unmount. Closing tidak diklaim membatalkan computation.
+
+Conversion berjalan di main thread memakai `exportToBlob`; belum ada worker untuk jalur ini. Preview selalu PNG light dan tema aplikasi beradaptasi lewat CSS, sehingga pergantian tema tidak mengulang parsing atau mengosongkan input.
+
+Metadata disimpan pada satu anchor: `customData.inkspireFlowchart = { schemaVersion: 1, diagramId, sourceMermaid, inputMode }`. Source adalah snapshot saat insertion; mengedit node di canvas tidak menyinkronkan metadata, dan metadata tidak pernah dieksekusi sebagai kode. Draft IndexedDB dan file `.excalidraw` membawa elemen serta metadata melalui serialisasi native. Input flowchart yang belum ditambahkan hanya hidup di memori halaman dan hilang ketika tab ditutup.
+
 ## Batas dan failure handling
 
 | Batas | Nilai |
@@ -154,6 +203,8 @@ Error downstream tidak diteruskan mentah. Respons lokal membawa `code`, pesan ap
 - Serving memblokir path sensitif dan traversal. Production hanya menyajikan file dalam `dist`, dengan pemeriksaan realpath untuk mencegah symlink keluar dari root.
 - `.env` dan file backend tidak disajikan oleh web server. `.gitignore` mengecualikan kredensial, folder sementara, artefak lokal, dan output build.
 - Font UI/editor serta worker disajikan lokal. Worker font native memiliki graph terpisah agar tidak mengimpor entry UI yang membutuhkan `document`.
+- Flowchart tidak menambah permukaan jaringan: tidak ada endpoint baru, dan tidak ada permintaan model, MaPic, cloud, atau CDN pada alur tersebut. Preview dibuat dari elemen native hasil export editor, bukan dari SVG/HTML mentah pengguna.
+- Kedua jalur native text-to-diagram dan Mermaid dialihkan ke validator Inkspire yang sama, sehingga tidak ada entry editor yang menyisipkan diagram tanpa pemeriksaan batas.
 
 Validasi localhost membatasi akses request; aplikasi belum menyediakan autentikasi pengguna, kontrol akses berbasis akun, atau enkripsi storage browser. HTTP menuju MaPic juga tidak mengenkripsi Bearer; gunakan HTTPS atau transport terlindungi sesuai lingkungan jaringan.
 

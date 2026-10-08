@@ -6,6 +6,12 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 
 ### Added
 
+- **Flowchart lokal tanpa AI** di More Tools: langkah/kondisi terstruktur atau subset Mermaid → `FlowGraph` bounded → Mermaid kanonik → converter lokal → preview → elemen native editable. Mendukung keyword Indonesia/English, cabang dua spasi, merge label identik, `@label` untuk referensi maju/loop, arah TD/LR, batas 8.000 karakter / 200 baris / 50 node / 100 konektor / label 120 karakter / 350 elemen, error bernomor baris, dan warning struktur nonblocking. Bekerja tanpa `.env` atau MaPic.
+- Insertion aditif memakai API native editor: ID dan binding baru, satu group per diagram, posisi pusat viewport, satu langkah undo, tanpa reset scene/history atau mengubah diagram dan aset lama. Sumber disimpan sebagai snapshot `customData.inkspireFlowchart` pada satu anchor dan ikut draft/file `.excalidraw`.
+- Dialog modal dengan tab Teks/Mermaid, arah, contoh, preview, daftar warning, salin kode dengan fallback seleksi manual, keyboard tab/fokus/Escape, light/dark, Indonesia/English, dan layout satu kolom di mobile.
+- Adapter editor mengalihkan kedua jalur native (`ttd/text-to-diagram` dan `ttd/mermaid`) ke validator yang sama, sehingga entri Mermaid bawaan tidak lagi menjadi jalur bypass. Badge AI tetap pada item Flowchart disembunyikan lewat selector CSS yang diskop pada marker entry tersebut; tidak ada patch vendor atau manipulasi DOM.
+- `useWorkspace` mengekspos `workspaceId` reaktif sebagai mirror observable identitas, sehingga penggantian file bernama sama tetap menginvalidasi preview.
+- Spec MVP Flowchart pada `docs/superpowers/specs/2026-10-08-flowchart-design.md`.
 - Header README dengan banner SVG editorial, wordmark Space Grotesk berbentuk path, serta ikon Ink animasi mandiri. Loop tetes/ripple memiliki jeda; elemen picture memilih banner statis untuk reduced motion. Warna mengikuti light/dark browser tanpa font atau resource eksternal.
 - Pilihan Indonesia/English di footer, tersimpan lokal. Shell, label editor, dialog, status, dan pesan error berganti tanpa mereset canvas, aset, nama workspace, prompt, atau undo.
 - Outline persisten pada pilihan properti teks/guratan aktif, termasuk font, ukuran, perataan, warna, dan stroke; mendukung light/dark.
@@ -17,6 +23,7 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 
 ### Changed
 
+- `@excalidraw/mermaid-to-excalidraw` 2.2.2 dan `mermaid` 11.17.2 dinyatakan sebagai dependency langsung dengan pin persis seperti versi transitif yang sudah terpasang; Excalidraw tetap 0.18.1 dan tidak ada dependency lain yang naik versi.
 - Kontrol tema footer sebelumnya diganti dengan interaksi ikon Ink dan pilihan mengikuti sistem.
 - Petunjuk konfigurasi MaPic menjelaskan pemuatan `.env` saat startup, token service, restart companion, dan perbedaan draft/preview/file lokal.
 - Dokumentasi verifikasi mencatat cakupan mock dan T2I MaPic nyata secara terpisah.
@@ -35,6 +42,12 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 - Setelah integrasi tema/bahasa: typecheck dan build lulus; 41 tes unit/HTTP serta 29 E2E pada masing-masing mode dev dan compiled production lulus.
 - Satu T2I nyata dari UI berhasil HTTP200, 40 steps/CFG1/resolusi1024, dalam 34,611 detik. Preview dan unduhan PNG1024×1024 berhasil; hasil lolos validasi decode penuh. I2I tetap memiliki verifikasi mock.
 - Evidence lengkap serta keterbatasan pemeriksaan tersedia di [verifikasi](docs/verification.md). Gate sebelum initial push dijalankan kembali: typecheck/build, 41 tes unit/HTTP, 29 E2E dev dan 29 E2E compiled production lulus.
+
+### Verified — 2026-10-08 (Flowchart lokal)
+
+- Gate fresh pada branch `feat/flowchart`: typecheck exit 0; 90 tes unit/HTTP pada 14 files (1,07 detik); build exit 0; 45 E2E development lulus (1,5 menit); 44 E2E compiled production lulus dengan 1 skip khusus dev (56,9 detik).
+- Bukti browser mencakup preview tanpa mutasi canvas, insertion bergrup dengan binding tertutup dan satu undo, dua insertion tanpa collision, edit native yang mempertahankan konektor, aset gambar lama utuh, guard workspace bernama sama dan hasil async basi, revoke object URL, serta nol request non-loopback dan nol `/api/*` pada alur Flowchart.
+- Review visual screenshot light, dark, mobile 390 px, dan dropdown More Tools dilakukan manual; entri Flowchart tidak menampilkan badge AI. Detail pada [verifikasi](docs/verification.md).
 
 ## 0.1.0 — 2026-10-07
 

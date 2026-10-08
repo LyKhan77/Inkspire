@@ -22,6 +22,7 @@ Versi berikut mengikuti manifest saat dokumen dibuat. Periksa [package.json](pac
 | Frontend | React 19.3.0, TypeScript 7.0.2 |
 | Editor | Excalidraw 0.18.1 |
 | UI | CSS, Tabler Icons React 3.49.0, font lokal |
+| Flowchart lokal | Mermaid 11.17.2 dan `@excalidraw/mermaid-to-excalidraw` 2.2.2, pinned; berjalan di browser |
 | Dev/build | Vite 8.3.3, plugin React 6.1.2, tsx 4.23.15 |
 | Companion | HTTP/HTTPS native Node.js; Sharp 0.35.5 |
 | Persistence | IndexedDB dan localStorage native |
@@ -37,9 +38,10 @@ Versi berikut mengikuti manifest saat dokumen dibuat. Periksa [package.json](pac
 - Preview AI sebelum insertion; insertion dengan rasio gambar, undo, dan guard identitas workspace; unduhan PNG terpisah.
 - Tema sistem/manual melalui ikon Ink dengan transisi tinta; keyboard, reduced motion, dan fallback tanpa View Transition API.
 - Pilihan Indonesia/English dan outline aktif pada properti teks/guratan.
+- Flowchart lokal tanpa AI di More Tools: langkah/kondisi terstruktur atau subset Mermaid menjadi elemen native editable. Insertion aditif dengan satu undo dan snapshot sumber pada metadata; tidak ada model bahasa, endpoint baru, atau panggilan MaPic. Entri Mermaid bawaan editor memakai validator yang sama.
 - Font, worker editor, serta notice dependency disajikan lokal.
 
-Preview AI, prompt, dan referensi hanya berada dalam memori halaman. Gambar ikut draft dan file workspace setelah ditambahkan ke canvas. Belum ada gallery/history AI, banyak draft aktif, collaboration, cloud sync, akun, atau MCP.
+Preview AI, prompt, dan referensi hanya berada dalam memori halaman. Gambar ikut draft dan file workspace setelah ditambahkan ke canvas. Input Flowchart yang belum ditambahkan bersifat sama: hanya memori halaman, dan sumber pada metadata adalah snapshot saat insertion. Belum ada gallery/history AI, banyak draft aktif, collaboration, cloud sync, akun, atau MCP. Pada Flowchart belum ada sinkronisasi sumber↔canvas, penggantian otomatis diagram lama, nested indentation, atau jenis diagram lain.
 
 ## 4. Project Structure
 
@@ -50,6 +52,7 @@ src/
   app.css                  Layout, token visual, outline, dan animasi
   features/
     editor/                Adapter editor, insertion gambar, tema, bahasa
+    flowchart/             Parser teks/Mermaid, graph bounded, converter lokal, dialog, insertion
     workspace/             IndexedDB, autosave, file, import/export, dialog
     ai/                    Kontrak, request, referensi, state, panel AI
 server/                    Companion, konfigurasi, validasi, MaPic, web serving
@@ -115,7 +118,7 @@ Setelah perubahan, jalankan pemeriksaan yang relevan, perbarui dokumentasi terda
 
 Sumber riwayat perubahan: [CHANGELOG.md](CHANGELOG.md). Evidence pemeriksaan: [docs/verification.md](docs/verification.md). Periksa kedua dokumen sebelum menyimpulkan status implementasi atau pengujian.
 
-Saat dokumen ini dibuat, MVP, outline properti aktif, bahasa Indonesia/English, dan tema tinta mengembang telah tersedia. T2I MaPic nyata telah berhasil; I2I memiliki verifikasi mock. Perubahan setelah implementasi awal `0.1.0` dicatat pada bagian **Unreleased**. Hasil tes historis tidak menggantikan verifikasi perubahan baru.
+Saat dokumen ini dibuat, MVP, outline properti aktif, bahasa Indonesia/English, tema tinta mengembang, dan Flowchart lokal tanpa AI telah tersedia. T2I MaPic nyata telah berhasil; I2I memiliki verifikasi mock. Perubahan setelah implementasi awal `0.1.0` dicatat pada bagian **Unreleased**. Hasil tes historis tidak menggantikan verifikasi perubahan baru.
 
 Lisensi repository adalah [Apache-2.0](LICENSE), dipilih pengguna. Notice dependency/font tersedia di [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Jangan mengubah lisensi atau menyatakan release/publikasi telah terjadi tanpa keputusan dan evidence yang sesuai.
 

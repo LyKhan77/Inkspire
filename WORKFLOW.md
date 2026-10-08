@@ -84,9 +84,84 @@ Preview, prompt, dan referensi AI hanya berada dalam memori halaman. Tambahkan a
 
 Penyimpanan terpisah berdasarkan profil browser dan origin, bukan akun. Menghapus data browser, mode privat, pergantian browser/alamat, atau kuota storage dapat memengaruhi draft. File unduhan menyediakan cadangan terpisah.
 
+## Alur Flowchart
+
+1. Buka **More Tools** (ikon tiga titik di toolbar editor) lalu pilih **Flowchart**. Entri ini tidak memakai AI, API key, atau konfigurasi MaPic.
+2. Pada tab **Teks langkah**, tulis satu langkah per baris. **Muat contoh** mengisi contoh Indonesia.
+3. Pilih **Arah flowchart** (Atas ke bawah atau Kiri ke kanan), lalu klik **Buat preview**.
+4. Periksa preview dan warning struktur. Klik **Tambahkan ke canvas** untuk menyisipkan sebagai elemen native; canvas tidak berubah sebelum tombol ini ditekan.
+
+```text
+Mulai
+Terima request
+Jika input valid?:
+  Ya -> Simpan data -> Selesai
+  Tidak -> Tampilkan error -> Selesai
+```
+
+```text
+Start -> Receive request
+If input valid?:
+  Yes -> Save data -> End
+  No -> Show error -> End
+```
+
+### Grammar tab Teks
+
+| Aturan | Perilaku |
+| --- | --- |
+| `->` atau `→` | Menyusun urutan langkah dalam satu baris |
+| Baris langkah berurutan | Tersambung otomatis sampai kondisi pertama |
+| `Jika <kondisi>:` / `If <condition>:` | Menjadi decision; tanda tanya opsional, keyword dan titik dua wajib |
+| Dua spasi + `Ya`/`Yes`/`Tidak`/`No` | Cabang; tepat satu Ya dan satu Tidak per kondisi |
+| Tab atau indentasi lebih dari dua spasi | Ditolak dengan nomor baris |
+| Nested indentation | Di luar scope MVP |
+| Label identik | Node yang sama; perbandingan case-sensitive setelah NFC, trim, dan pemadatan spasi |
+| `@label` | Referensi node lain, hanya sebagai token terakhir; target harus didefinisikan di bagian mana pun |
+| `Mulai`/`Start`/`Selesai`/`End` | Terminal. Label terminal Indonesia dan English tidak otomatis digabung |
+
+Dua proses berbeda harus memakai label berbeda. Separator, newline, dan prefix `@` tidak tersedia sebagai label literal. Blok setelah kondisi memulai rantai sendiri, jadi merge eksplisit memakai label yang sama atau `@label`.
+
+### Subset Mermaid
+
+Tab **Mermaid** menerima subset yang hasilnya sama dengan tab Teks; kode kanonik dari preview dapat disalin ke sana lewat **Gunakan kode Mermaid**. Tidak ada konversi Mermaid kembali ke teks.
+
+| Bentuk | Sintaks |
+| --- | --- |
+| Header | `flowchart TD`, `flowchart LR`, `graph TD`, `graph LR`; `TB` dinormalisasi ke `TD` |
+| Proses | `A["Label"]`, `A[Label]` |
+| Decision | `B{"Kondisi?"}`, `B{Kondisi?}` |
+| Terminal | `C(["Selesai"])`, `C([Selesai])`, `C("Selesai")`, `C(Selesai)` |
+| Edge | `A --> B`, `A -->\|Ya\| B` |
+
+ID harus huruf ASCII diikuti huruf/angka/underscore. Semua referensi wajib punya definisi dan definisi ulang dengan label/bentuk berbeda ditolak. Yang ditolak dengan alasan: komentar, `;` antar statement, subgraph, `style`/`class`, `click`/`link`/callback, frontmatter, direktif `%%{init}%%`, label HTML/markdown, image/icon, bentuk `@{...}`, dan tipe diagram selain flowchart. Entity desimal dan `#quot;` dikenali pada label lalu ditulis ulang secara aman.
+
+### Pesan dan batas
+
+| Kode | Arti |
+| --- | --- |
+| `EMPTY`, `LIMIT` | Input kosong atau melewati batas 8.000 karakter, 200 baris, 50 node, 100 konektor, label 120 karakter |
+| `LABEL` | Label kosong, terlalu panjang, atau memakai format aktif |
+| `TEXT_SYNTAX` | Baris/indentasi/token kosong tidak sesuai grammar |
+| `BRANCHES` | Kondisi tanpa satu Ya dan satu Tidak, cabang berulang, atau cabang di luar blok |
+| `UNKNOWN_NODE` | `@label` atau referensi menuju node yang tidak didefinisikan |
+| `CONFLICT` | Node didefinisikan ulang dengan label atau bentuk berbeda |
+| `MERMAID_SYNTAX`, `UNSUPPORTED_OUTPUT` | Subset ditolak, atau hasil converter di luar elemen native yang didukung |
+| `CONVERSION_FAILED`, `STALE` | Preview gagal dibuat, atau workspace/API berubah sejak preview dibuat |
+
+Warning `NO_START`, `UNREACHABLE`, `DECISION_BRANCHES`, dan `DEAD_END` tidak memblokir preview; cycle dan self-loop juga sah. Validasi struktur tidak membuktikan kebenaran logika engineering.
+
+### Batas lifecycle yang perlu diingat
+
+- Insertion bersifat aditif: ID dan binding baru, satu group per diagram, posisi di pusat viewport, dan tepat satu langkah undo. Diagram lama tidak diganti.
+- Mengedit atau memindahkan node tidak menyinkronkan sumber. `Mermaid` pada metadata adalah snapshot saat insertion; salin kode dari dialog sebelum menutup atau reload jika masih ingin mengubahnya.
+- Input dan tab bertahan selama halaman terbuka, termasuk setelah dialog ditutup, tetapi tidak masuk draft dan hilang saat tab browser ditutup.
+- Ganti workspace, seandainya bernama sama, membuat preview kedaluwarsa dan **Buat preview** harus ditekan ulang.
+- Shortcut workspace (`Ctrl/Cmd+S`, `Ctrl/Cmd+O`, `Ctrl/Cmd+Backspace/Delete`) dinonaktifkan hanya ketika dialog Flowchart terbuka; mengetik di textarea tidak menjalankan shortcut drawing.
+
 ## Development dan verifikasi
 
-Ubah kode sesuai area: editor di `src/features/editor`, persistence/file di `src/features/workspace`, AI di `src/features/ai`, dan transport/validasi backend di `server`.
+Ubah kode sesuai area: editor di `src/features/editor`, persistence/file di `src/features/workspace`, AI di `src/features/ai`, flowchart lokal di `src/features/flowchart`, dan transport/validasi backend di `server`.
 
 Untuk perubahan perilaku, jalankan pemeriksaan terarah pada area yang diubah. Sebelum menyiapkan versi baru, jalankan gate lengkap:
 

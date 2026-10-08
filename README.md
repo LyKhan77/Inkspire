@@ -83,6 +83,22 @@ Canvas dapat diedit, disimpan, dan diexport selama menunggu. Menutup panel mempe
 
 Kontrak lengkap: [docs/mapic-contract.md](docs/mapic-contract.md).
 
+## Flowchart
+
+Flowchart lokal: buka More Tools → Flowchart, tulis langkah/kondisi terstruktur atau subset Mermaid, lalu Buat preview dan Tambahkan ke canvas. Bentuk, teks, dan konektor dapat diedit; fitur tidak memakai AI atau API key. Mermaid yang disimpan pada metadata adalah snapshot saat insertion, bukan sinkronisasi otomatis dengan edit canvas.
+
+```text
+Mulai
+Terima request
+Jika input valid?:
+  Ya -> Simpan data -> Selesai
+  Tidak -> Tampilkan error -> Selesai
+```
+
+Cabang memakai tepat dua spasi dan kata kunci Indonesia/English (`Jika`/`If`, `Ya`/`Yes`, `Tidak`/`No`). Label identik digabung, `@label` merujuk node lain untuk merge atau loop, dan `->` atau `→` menyusun urutan. Tab Mermaid menerima subset `flowchart`/`graph` TD/TB/LR dengan bentuk proses, kondisi, dan terminal. Input yang tidak didukung ditolak dengan pesan bernomor baris sebelum preview dibuat; tidak ada teks mentah yang diteruskan ke renderer.
+
+Flowchart bekerja tanpa `.env` atau MaPic. Entri **Mermaid to Excalidraw** bawaan editor dialihkan ke validator yang sama, sehingga tidak ada jalur yang melewati pemeriksaan. Preview hanya gambar: canvas tidak berubah sampai **Tambahkan ke canvas** ditekan, dan satu undo mengembalikan seluruh diagram. Input bertahan di memori halaman selama tab terbuka; salin kode Mermaid sebelum menutup tab atau reload jika ingin menyimpan sumbernya.
+
 ## Pemeriksaan lokal
 
 ```sh

@@ -7,6 +7,8 @@ Banner SVG `public/brand/readme-header.svg` dan `public/brand/readme-header-stat
 | Komponen | Notice |
 | --- | --- |
 | Excalidraw 0.18.1 | MIT; `public/excalidraw/licenses/Excalidraw.txt` |
+| @excalidraw/mermaid-to-excalidraw 2.2.2 | MIT; `public/notices/@excalidraw__mermaid-to-excalidraw-2.2.2/` |
+| Mermaid 11.17.2 | MIT; `public/notices/mermaid-11.17.2/`. Dipakai hanya untuk jalur Flowchart lokal; graph transitifnya (chevrotain, dagre-d3-es, cytoscape, DOMPurify, KaTeX, dan lainnya) ikut disajikan lokal dengan lisensinya masing-masing |
 | React / ReactDOM | MIT; license dalam package dependency dan salinan build di `public/notices/` |
 | Tabler Icons | MIT; `public/brand/Tabler-LICENSE.txt` |
 | Sharp / libvips | Apache-2.0 untuk Sharp; notice native distribution dipertahankan dalam dependency |

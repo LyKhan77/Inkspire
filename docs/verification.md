@@ -126,3 +126,46 @@ Pengguna memilih Apache-2.0 dan meminta pembersihan artefak sebelum push. Pemeri
 | Scan staged files | 565 file; 0 token/URL operator dan 0 path yang harus dikecualikan |
 
 Tes HTTP awal pada sandbox ditolak EPERM saat bind loopback; suite yang sama dijalankan kembali dengan izin loopback dan seluruh tes lulus. Whitespace source/dokumen first-party bersih; teks notice/aset upstream dipertahankan tanpa normalisasi. Semua artefak tes baru dibersihkan setelah pemeriksaan. Isi temp tetap utuh menurut inventaris path, ukuran, dan mtime. Suite otomatis memakai mock; tidak menjalankan generation GPU tambahan.
+
+## Flowchart lokal — 8 Oktober 2026
+
+Pemeriksaan ini dijalankan pada branch `feat/flowchart` setelah seluruh implementasi Flowchart tanpa AI selesai. Angka di bawah adalah hasil fresh; bagian sebelumnya tetap menjadi evidence historis sesi lama dan tidak dianggap hasil perubahan ini.
+
+| Gate | Hasil aktual |
+| --- | --- |
+| `npm run typecheck` (client/server/tests) | Exit 0 |
+| `npm test` | Exit 0 — 90 tes pada 14 files, durasi 1,07 detik |
+| `npm run build` | Exit 0; frontend built in 1,50 detik, warning ukuran chunk native tetap ada |
+| `npm run test:e2e` (development) | Exit 0 — 45 tes, 1,5 menit |
+| `INKSPIRE_TEST_MODE=production npm run test:e2e` | Exit 0 — 44 lulus + 1 di-skip, 56,9 detik |
+
+Tes unit baru: `tests/flowchart-model.test.ts` (8), `tests/flowchart-text.test.ts` (11), `tests/flowchart-mermaid.test.ts` (26), `tests/flowchart-insert.test.ts` (4). E2E baru: `tests/flowchart.e2e.ts` (14) dan `tests/flowchart-security.e2e.ts` (3).
+
+Satu tes E2E di-skip hanya pada mode production: penundaan modul converter lazy untuk membuktikan hasil async yang datang setelah closing/workspace replacement tidak dipublikasikan. Bundler meng-inline graph tersebut di production, sehingga bentuk penundaannya tidak ada; pada production kasus yang sama tetap ditutupi oleh invalidasi input dan penggantian workspace bernama sama memakai converter asli hasil build.
+
+### Cakupan penerimaan yang dibuktikan browser
+
+Seluruhnya memakai converter/editor nyata pada harness mock `4183`/`4184`, tanpa `.env` operator dan tanpa GPU nyata.
+
+- Preview tidak mengubah canvas: scene sebelum dan sesudah preview identik; dialog native `ttd` tidak pernah ter-mount (MutationObserver mencatat 0 mount pada kedua jalur entry).
+- Insertion: elemen baru >5, bukan image, satu anchor `customData.inkspireFlowchart`, seluruh elemen memakai `groupIds` diagram, semua `startBinding`/`endBinding`/`containerId`/`boundElements` menunjuk ID yang ada, satu undo mengembalikan scene awal, redo menghasilkan ID yang sama, lalu draft/reload/import mempertahankan field persistent.
+- Dua insertion terpisah: ID dan group berbeda, tidak ada elemen hilang, total elemen dua kali lipat.
+- Edit native: menggeser satu node dengan keyboard mempertahankan konektor ke ID tersebut, teks bound ikut relatif, dan sumber pada metadata tetap snapshot.
+- Aset lama: import fixture dua gambar, tambah flowchart, export/reload → dataURL file asli tidak berubah.
+- Lifecycle: edit input membuang preview dan men-disable Tambahkan; Escape mengembalikan fokus ke pemicu More Tools dan input bertahan; workspace pengganti bernama sama memicu `STALE` dan menolak insertion; object URL preview (`image/png`) direvoke saat diganti, dibuang, dan unmount.
+- Local-only: tidak ada request ke origin non-loopback dan tidak ada request `/api/*` selama seluruh alur Flowchart; 0 dialog JavaScript; console error 0.
+- Batas: 51 node, label 121 karakter, input 8.001 karakter, cabang kurang, referensi tak dikenal, indentasi bertingkat, tab, dan label HTML menghasilkan error bernomor baris sebelum preview; 101 edge pada tab Mermaid ditolak batas.
+- UI: keyboard tab ArrowLeft/ArrowRight/Home/End, shortcut workspace tetap ter-guard saat modal terbuka, mengetik `r` di textarea tidak mengaktifkan tool persegi, warning struktur nonblocking, salin kode dengan fallback, light/dark/mobile 390 px tanpa overflow horizontal, dan pergantian bahasa mempertahankan sumber/ID/canvas sementara grammar Indonesia tetap diterima.
+
+### Review visual
+
+Screenshot diperiksa manual, bukan hanya disimpan: `output/flowchart/flowchart-more-tools.png` (entri Flowchart tanpa badge AI; entri Mermaid native tetap terlihat sebagai jalur terpisah), `flowchart-light.png`, `flowchart-dark.png`, dan `flowchart-mobile.png`. Light menampilkan dialog dua kolom dengan preview dan kode kanonik; dark memakai adaptasi CSS pada preview light; mobile satu kolom tanpa overflow. Artefak berada di `output/` yang dikecualikan Git dan tidak di-commit.
+
+### Deviasi dan batas yang dicatat
+
+- Contoh plan mengimpor `ExcalidrawElementSkeleton` dari `@excalidraw/excalidraw/element/transform`; path tipe itu tidak ada pada 0.18.1 sehingga dipakai `@excalidraw/excalidraw/data/transform`.
+- `convertGraph` tidak menerima parameter tema. Preview selalu PNG light dan tema ditangani CSS, sesuai aturan bahwa pergantian tema tidak mengulang parsing.
+- Entri cabang di luar blok (`Ya -> ...` tanpa indentasi) ditolak sebagai `BRANCHES`, bukan dianggap proses bernama `Ya`, mengikuti aturan grammar pada spec.
+- Wrapper 2.2.2 tidak mendeklarasikan `securityLevel`/`htmlLabels`; tidak ada field di luar tipe yang ditambahkan. Yang dikirim hanya `startOnLoad`, `maxEdges`, `maxTextSize`, `flowchart.curve`, dan `themeVariables.fontSize`. Pertahanan utama adalah boundary input kanonik, dan hasil adversarial dibuktikan lewat browser tests di atas.
+- Perbandingan scene lintas restore memakai pencocokan field persistent dengan toleransi geometri 5 px, karena Excalidraw mengukur ulang bound text setelah font siap. ID, tipe, teks, group, binding, dan metadata dibandingkan persis.
+- Pemeriksaan struktur tidak membuktikan kebenaran logika engineering; nested indentation, jenis diagram lain, dan sinkronisasi sumber↔canvas tetap di luar scope.
