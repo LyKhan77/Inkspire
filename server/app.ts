@@ -50,6 +50,6 @@ export async function startApp(config: AppConfig) {
   await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(config.port, '127.0.0.1', resolve); });
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Companion address missing');
-  origin = `http://127.0.0.1:${address.port}`;
+  origin = config.origin.startsWith('https://') ? config.origin : `http://127.0.0.1:${address.port}`;
   return { server, origin, async close() { await web.close(); await new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => resolve()); }); } };
 }
