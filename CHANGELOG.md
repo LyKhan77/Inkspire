@@ -33,6 +33,8 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 
 ### Fixed
 
+- Flowchart: arrow yang dihasilkan converter Mermaid bisa masuk canvas dengan `points[0]` bukan `[0, 0]`, sehingga Excalidraw mencatat `Linear element is not normalized` saat konektor dibuka di editor garis. Hasil conversion dinormalisasi (origin digeser, `x`/`y` dan `width`/`height` dihitung ulang) sebelum preview maupun insertion, dan boundary output kini menolak panah yang belum ternormalisasi alih-alih mengirimnya ke scene.
+- Flowchart: token Mermaid dengan dua deklarasi bentuk pada satu baris (`A["One"] B["Two"]`) diterima diam-diam sebagai satu node berlabel cacat. Wrapper bentuk sekarang harus cocok dengan seluruh token, kutip hanya boleh membungkus seluruh isi, dan token campuran ditolak `MERMAID_SYNTAX` dengan nomor baris; label berkurung siku di dalam kutip tetap diterima.
 - Hover swatch mempertahankan warna elemen; outline mengikuti filter warna native pada dark mode.
 - Konfigurasi lingkungan lokal yang menyebabkan `SERVICE_UNCONFIGURED` diperbaiki dengan reload companion setelah perubahan `.env`.
 - Ketidaksesuaian token lokal dengan token runtime MaPic yang menyebabkan HTTP401 diperbaiki dengan menyamakan konfigurasi backend dan restart companion. Ini perbaikan konfigurasi operator, bukan perubahan autentikasi source.
@@ -48,6 +50,12 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 - Gate fresh pada branch `feat/flowchart`: typecheck exit 0; 90 tes unit/HTTP pada 14 files (1,07 detik); build exit 0; 45 E2E development lulus (1,5 menit); 44 E2E compiled production lulus dengan 1 skip khusus dev (56,9 detik).
 - Bukti browser mencakup preview tanpa mutasi canvas, insertion bergrup dengan binding tertutup dan satu undo, dua insertion tanpa collision, edit native yang mempertahankan konektor, aset gambar lama utuh, guard workspace bernama sama dan hasil async basi, revoke object URL, serta nol request non-loopback dan nol `/api/*` pada alur Flowchart.
 - Review visual screenshot light, dark, mobile 390 px, dan dropdown More Tools dilakukan manual; entri Flowchart tidak menampilkan badge AI. Detail pada [verifikasi](docs/verification.md).
+
+### Verified — 2026-10-08 (Perbaikan review Flowchart)
+
+- Gate fresh setelah perbaikan F1/F2: typecheck exit 0; 103 tes unit/HTTP pada 14 files (1,02 detik); build exit 0; 46 E2E development lulus (1,6 menit); 45 E2E compiled production lulus dengan 1 skip yang hanya membentuk penundaan impor modul dev (59,0 detik).
+- Hasil async yang masih pending kini dibuktikan pada **kedua mode** dengan menahan callback `canvas.toBlob` lalu melepasnya setelah closing dan penggantian workspace; klaim coverage pada dokumentasi dikoreksi mengikuti itu.
+- Preservasi geometri diukur per tahap: mutation, reload draft, dan import file `.excalidraw` dituntut delta 0 pada seluruh field persistent; hanya replay undo→redo yang diberi batas 4 px khusus geometry panah, dengan angka terukur dicatat. Drag vertex lewat **Edit arrow** dan penolakan token Mermaid cacat kini punya regression sendiri.
 
 ## 0.1.0 — 2026-10-07
 

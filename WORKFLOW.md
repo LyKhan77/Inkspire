@@ -134,7 +134,7 @@ Tab **Mermaid** menerima subset yang hasilnya sama dengan tab Teks; kode kanonik
 | Terminal | `C(["Selesai"])`, `C([Selesai])`, `C("Selesai")`, `C(Selesai)` |
 | Edge | `A --> B`, `A -->\|Ya\| B` |
 
-ID harus huruf ASCII diikuti huruf/angka/underscore. Semua referensi wajib punya definisi dan definisi ulang dengan label/bentuk berbeda ditolak. Yang ditolak dengan alasan: komentar, `;` antar statement, subgraph, `style`/`class`, `click`/`link`/callback, frontmatter, direktif `%%{init}%%`, label HTML/markdown, image/icon, bentuk `@{...}`, dan tipe diagram selain flowchart. Entity desimal dan `#quot;` dikenali pada label lalu ditulis ulang secara aman.
+ID harus huruf ASCII diikuti huruf/angka/underscore. Satu token hanya boleh membawa satu deklarasi bentuk: wrapper harus membungkus seluruh isi token, sehingga tulisan seperti `A["One"] B["Two"]` atau `A[One}]` ditolak dengan nomor baris alih-alih dibaca sebagai satu label. Semua referensi wajib punya definisi dan definisi ulang dengan label/bentuk berbeda ditolak. Yang ditolak dengan alasan: komentar, `;` antar statement, subgraph, `style`/`class`, `click`/`link`/callback, frontmatter, direktif `%%{init}%%`, label HTML/markdown, image/icon, bentuk `@{...}`, dan tipe diagram selain flowchart. Entity desimal dan `#quot;` dikenali pada label lalu ditulis ulang secara aman.
 
 ### Pesan dan batas
 

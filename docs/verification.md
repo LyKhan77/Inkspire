@@ -134,27 +134,29 @@ Pemeriksaan ini dijalankan pada branch `feat/flowchart` setelah seluruh implemen
 | Gate | Hasil aktual |
 | --- | --- |
 | `npm run typecheck` (client/server/tests) | Exit 0 |
-| `npm test` | Exit 0 — 90 tes pada 14 files, durasi 1,07 detik |
-| `npm run build` | Exit 0; frontend built in 1,50 detik, warning ukuran chunk native tetap ada |
-| `npm run test:e2e` (development) | Exit 0 — 45 tes, 1,5 menit |
-| `INKSPIRE_TEST_MODE=production npm run test:e2e` | Exit 0 — 44 lulus + 1 di-skip, 56,9 detik |
+| `npm test` | Exit 0 — 103 tes pada 14 files, durasi 1,02 detik |
+| `npm run build` | Exit 0; frontend built in 1,40 detik, warning ukuran chunk native dan dynamic-import inline tetap ada |
+| `npm run test:e2e` (development) | Exit 0 — 46 tes, 1,6 menit |
+| `INKSPIRE_TEST_MODE=production npm run test:e2e` | Exit 0 — 45 lulus + 1 di-skip, 59,0 detik |
 
-Tes unit baru: `tests/flowchart-model.test.ts` (8), `tests/flowchart-text.test.ts` (11), `tests/flowchart-mermaid.test.ts` (26), `tests/flowchart-insert.test.ts` (4). E2E baru: `tests/flowchart.e2e.ts` (14) dan `tests/flowchart-security.e2e.ts` (3).
+Tes unit baru: `tests/flowchart-model.test.ts` (8), `tests/flowchart-text.test.ts` (11), `tests/flowchart-mermaid.test.ts` (39), `tests/flowchart-insert.test.ts` (4). E2E baru: `tests/flowchart.e2e.ts` (13) dan `tests/flowchart-security.e2e.ts` (4).
 
-Satu tes E2E di-skip hanya pada mode production: penundaan modul converter lazy untuk membuktikan hasil async yang datang setelah closing/workspace replacement tidak dipublikasikan. Bundler meng-inline graph tersebut di production, sehingga bentuk penundaannya tidak ada; pada production kasus yang sama tetap ditutupi oleh invalidasi input dan penggantian workspace bernama sama memakai converter asli hasil build.
+Hasil async yang masih pending saat dialog ditutup dan workspace diganti diuji pada **kedua mode**: tes menahan callback `HTMLCanvasElement.prototype.toBlob`, melepasnya setelah replacement, lalu membuktikan tidak ada preview, Tambahkan disabled, dan canvas kosong. Satu-satunya tes yang di-skip di production hanya membentuk penundaan **impor modul** converter (code-splitting dev); bundler meng-inline modul itu sehingga bentuk penundaannya tidak ada di production, dan angka 1 skipped di atas adalah tes tersebut.
 
 ### Cakupan penerimaan yang dibuktikan browser
 
 Seluruhnya memakai converter/editor nyata pada harness mock `4183`/`4184`, tanpa `.env` operator dan tanpa GPU nyata.
 
 - Preview tidak mengubah canvas: scene sebelum dan sesudah preview identik; dialog native `ttd` tidak pernah ter-mount (MutationObserver mencatat 0 mount pada kedua jalur entry).
-- Insertion: elemen baru >5, bukan image, satu anchor `customData.inkspireFlowchart`, seluruh elemen memakai `groupIds` diagram, semua `startBinding`/`endBinding`/`containerId`/`boundElements` menunjuk ID yang ada, satu undo mengembalikan scene awal, redo menghasilkan ID yang sama, lalu draft/reload/import mempertahankan field persistent.
+- Insertion: elemen baru >5, bukan image, satu anchor `customData.inkspireFlowchart`, seluruh elemen memakai `groupIds` diagram, semua `startBinding`/`endBinding`/`containerId`/`boundElements` menunjuk ID yang ada, dan setiap `arrow`/`line` masuk canvas dengan `points[0] === [0, 0]`. Satu undo mengembalikan scene awal; dua snapshot berturut-turut sesudah insertion identik (geometri sudah stabil, tidak menyusut/mekar sendiri).
+- Preservasi geometri lintas tahap: `saveScene` dibandingkan per field untuk **seluruh** field persistent (x, y, width, height, setiap `points[i][j]`, style, text/originalText, seed, groupIds, binding, customData) kecuali `version`/`versionNonce`/`updated` yang memang bookkeeping sejarah. Tahap mutation-klik, reload draft, dan import file harus delta 0 (toleransi hanya 1e-9 untuk noise float bit terakhir). Satu tahap diukur perlu pengecualian: replay undo→redo menghitung ulang ujung panah yang terikat node, dengan delta maksimum terukur arrow.width 3,01 / arrow.points 2,50 / arrow.x 0,97 / arrow.y 0,50 / arrow.height 1,42 dan text.x 1,1e-13; tahap itu diberi batas 4 px khusus geometry panah, dan state hasilnya kembali stabil 0 pada tahap sesudahnya.
 - Dua insertion terpisah: ID dan group berbeda, tidak ada elemen hilang, total elemen dua kali lipat.
-- Edit native: menggeser satu node dengan keyboard mempertahankan konektor ke ID tersebut, teks bound ikut relatif, dan sumber pada metadata tetap snapshot.
+- Edit native: kontrol **Pisahkan pilihan** pada menu konteks benar-benar menghapus group (semua `groupIds` kosong pada scene tersimpan) tanpa memindahkan satu field pun; sesudah itu menggeser satu node dengan keyboard menggerakkan hanya node tersebut, teks bound-nya, dan konektor yang terikat padanya — semua elemen lain delta 0, `points[0]` tetap `[0, 0]`, binding menunjuk ID yang sama, geometri konektor berubah, dan sumber pada metadata tetap snapshot. Tombol native **Edit arrow** membuka `LinearElementEditor` dan drag vertex benar-benar memindahkan titik itu; tidak ada console error `Linear element is not normalized` pada kedua tahap.
 - Aset lama: import fixture dua gambar, tambah flowchart, export/reload → dataURL file asli tidak berubah.
 - Lifecycle: edit input membuang preview dan men-disable Tambahkan; Escape mengembalikan fokus ke pemicu More Tools dan input bertahan; workspace pengganti bernama sama memicu `STALE` dan menolak insertion; object URL preview (`image/png`) direvoke saat diganti, dibuang, dan unmount.
-- Local-only: tidak ada request ke origin non-loopback dan tidak ada request `/api/*` selama seluruh alur Flowchart; 0 dialog JavaScript; console error 0.
+- Local-only: tidak ada request ke origin non-loopback dan tidak ada request `/api/*` selama seluruh alur Flowchart; 0 dialog JavaScript; console error 0. Pada dua tes yang melakukan drag/download, satu log internal Chromium (`Blocked attempt to show a 'beforeunload' confirmation panel`) dikecualikan secara eksplisit karena berasal dari browser saat download harness bertemu guard beforeunload aplikasi, bukan dari kode aplikasi; error `Linear element is not normalized` tidak dikecualikan dan tidak muncul.
 - Batas: 51 node, label 121 karakter, input 8.001 karakter, cabang kurang, referensi tak dikenal, indentasi bertingkat, tab, dan label HTML menghasilkan error bernomor baris sebelum preview; 101 edge pada tab Mermaid ditolak batas.
+- Validator Mermaid menolak token bentuk ganda di satu baris (`A["One"] B["Two"]`, `A["one" "two"]`, `A[One]]`, `A[One})`, `A{One?} extra`) dengan nomor baris yang benar, bukan diam-diam mengambil wrapper terluar; label berkurung siku di dalam kutip (`A["a]b"]`, `A["Yes -> No"]`) tetap diterima dan roundtrip.
 - UI: keyboard tab ArrowLeft/ArrowRight/Home/End, shortcut workspace tetap ter-guard saat modal terbuka, mengetik `r` di textarea tidak mengaktifkan tool persegi, warning struktur nonblocking, salin kode dengan fallback, light/dark/mobile 390 px tanpa overflow horizontal, dan pergantian bahasa mempertahankan sumber/ID/canvas sementara grammar Indonesia tetap diterima.
 
 ### Review visual
@@ -167,5 +169,15 @@ Screenshot diperiksa manual, bukan hanya disimpan: `output/flowchart/flowchart-m
 - `convertGraph` tidak menerima parameter tema. Preview selalu PNG light dan tema ditangani CSS, sesuai aturan bahwa pergantian tema tidak mengulang parsing.
 - Entri cabang di luar blok (`Ya -> ...` tanpa indentasi) ditolak sebagai `BRANCHES`, bukan dianggap proses bernama `Ya`, mengikuti aturan grammar pada spec.
 - Wrapper 2.2.2 tidak mendeklarasikan `securityLevel`/`htmlLabels`; tidak ada field di luar tipe yang ditambahkan. Yang dikirim hanya `startOnLoad`, `maxEdges`, `maxTextSize`, `flowchart.curve`, dan `themeVariables.fontSize`. Pertahanan utama adalah boundary input kanonik, dan hasil adversarial dibuktikan lewat browser tests di atas.
-- Perbandingan scene lintas restore memakai pencocokan field persistent dengan toleransi geometri 5 px, karena Excalidraw mengukur ulang bound text setelah font siap. ID, tipe, teks, group, binding, dan metadata dibandingkan persis.
+- Perbandingan scene lintas restore tidak lagi memakai toleransi geometri global. Setiap tahap diukur lebih dulu pada harness ini, dan hanya tahap replay sejarah (undo→redo) yang mendapat batas khusus geometry panah 4 px dengan angka terukur di atas; seluruh tahap persistensi dituntut delta 0.
 - Pemeriksaan struktur tidak membuktikan kebenaran logika engineering; nested indentation, jenis diagram lain, dan sinkronisasi sumber↔canvas tetap di luar scope.
+
+## Perbaikan review Flowchart — 8 Oktober 2026
+
+Review terhadap branch `feat/flowchart` menghasilkan REQUEST_CHANGES dengan dua bug dan tiga permintaan regression. Gate pada bagian ini dijalankan ulang setelah perbaikan; hasil di atas adalah angka fresh yang sama.
+
+**F1 — arrow yang masuk ke canvas melanggar invariant `points[0] === [0, 0]`.** Converter Mermaid mengembalikan titik pertama pada offset kecil (terdokumentasi pada probe reviewer: `points: [[0, 0.5], [-0.5, 24.5], [-0.5, 45]]`), dan Excalidraw hanya menyentuh kembali field itu ketika user membuka editor garis, sehingga `new LinearElementEditor` mencatat `Linear element is not normalized`. Perbaikan: `normalizeLinearElements` pada `src/features/flowchart/convert.ts` menggeser origin ke `[0, 0]` sambil memindahkan `x`/`y` dan menghitung ulang `width`/`height` dari bbox titik; dipanggil baik pada jalur preview maupun pada payload insertion, dan `assertOutput(..., normalized)` kini menolak panah yang origin-nya bukan `[0, 0]` supaya kegagalan muncul sebelum scene disentuh, bukan sebagai console error di kemudian hari.
+
+**F2 — token Mermaid dengan dua deklarasi pada satu baris diterima diam-diam.** `readToken` sebelumnya hanya menguji prefix/suffix wrapper, sehingga `A["One"] B["Two"]` terbaca sebagai satu node berlabel `One"] B["Two`. Perbaikan: satu regexp jangkar per bentuk (`([...])`, `[...]`, `{...}`, `(...)`) yang harus cocok dengan **seluruh** token, dan kutip hanya diterima bila membungkus seluruh isi. Token campuran seperti `A[One]]`, `A[One})`, `A{One?} extra` kini `MERMAID_SYNTAX` dengan nomor baris (divalidasi pada baris 3), sementara `A["a]b"]` dan `A["Yes -> No"]` tetap valid karena wrapper diperiksa lebih dulu, bukan karakter di dalamnya.
+
+Regression yang ditambahkan: `tests/flowchart-mermaid.test.ts` (7 kasus penolakan token + uji nomor baris + roundtrip label berkurung siku, dan blok `linear element normalization`), `tests/flowchart.e2e.ts` (comparator deep per-field lintas tahap + invariant `points[0]`, tes native ungroup/single-node/`Edit arrow`), dan `tests/flowchart-security.e2e.ts` (gerbang `toBlob` untuk hasil async pending pada dev **dan** production).

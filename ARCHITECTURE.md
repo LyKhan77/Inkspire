@@ -140,15 +140,17 @@ Fitur berjalan sepenuhnya di browser. Tidak ada endpoint baru, API key, panggila
 | --- | --- |
 | `flowchart/model.ts` | Kontrak `FlowGraph`, batas, `FlowchartError`, builder, dan warning struktur |
 | `flowchart/text.ts` | Grammar langkah/kondisi Indonesia/English, merge label, `@ref`, dua spasi untuk cabang |
-| `flowchart/mermaid.ts` | Parser subset flowchart, entity decoding, dan serializer Mermaid kanonik |
-| `flowchart/convert.ts` | Import lazy converter, validasi output, dan Blob preview PNG |
-| `flowchart/insert.ts` | ID/binding baru, offset pusat viewport, group, metadata, dan satu updateScene |
+| `flowchart/mermaid.ts` | Parser subset flowchart dengan validasi token berjangkan, entity decoding, dan serializer Mermaid kanonik |
+| `flowchart/convert.ts` | Import lazy converter, normalisasi origin arrow/line, validasi output, dan Blob preview PNG |
+| `flowchart/insert.ts` | ID/binding baru, normalisasi ulang payload, offset pusat viewport, group, metadata, dan satu updateScene |
 | `flowchart/useFlowchart.ts` | Input, tab, arah, token revision, guard workspace/API, dan cleanup object URL |
 | `flowchart/FlowchartDialog.tsx` | Dialog, tab, preview, warning, salin kode, fokus/Escape |
 
 Input apa pun tidak pernah diteruskan langsung ke renderer. Parser menghasilkan graph tervalidasi, lalu serializer menulis ulang Mermaid kanonik dengan ID internal dan escaping entity; hanya teks kanonik itulah yang dikonversi. Karena itu statement, style, callback, subgraph, HTML, markdown, dan tipe diagram lain tidak punya jalur masuk. Mermaid 11 memakai `securityLevel` default `strict` dan array `secure` melindungi nilai itu dari override lewat direktif `%%{init}%%`; wrapper converter 2.2.2 tidak mendeklarasikan opsi keamanan sendiri, sehingga boundary input kanonik tetap menjadi pertahanan utama dan dibuktikan ulang oleh tes browser adversarial.
 
-Converter dapat jatuh ke gambar SVG untuk diagram yang tidak dikenali. `assertOutput` menolak hasil bertipe di luar rectangle/diamond/ellipse/text/arrow/line, hasil berafile, element ber-link, koordinat nonfinite, serta jumlah elemen di atas batas, sehingga diagram asing tidak pernah diam-diam menjadi gambar.
+Converter dapat jatuh ke gambar SVG untuk diagram yang tidak dikenali. `assertOutput` menolak hasil bertipe di luar rectangle/diamond/ellipse/text/arrow/line, hasil berafile, element ber-link, koordinat nonfinite, serta jumlah elemen di atas batas, sehingga diagram asing tidak pernah diam-diam menjadi gambar. Pada mode ternormalisasi ia juga menuntut `points[0] === [0, 0]` untuk arrow/line.
+
+`parseMermaidToExcalidraw` tidak selalu menulis titik pertama di origin, sedangkan `LinearElementEditor` Excalidraw mengasumsikannya dan mencatat `Linear element is not normalized` saat konektor dibuka. `normalizeLinearElements` memindahkan selisih origin ke `x`/`y` lalu menghitung ulang `width`/`height` dari bbox titik; dipanggil pada jalur preview dan insertion sehingga yang masuk ke scene, draft, dan file sudah valid. Sumbernya tetap kode Mermaid kanonik, jadi normalisasi geometri tidak mengubah metadata diagram.
 
 ### Batas flowchart
 
@@ -167,7 +169,7 @@ Error memblokir preview dan menampilkan nomor baris. Warning (`NO_START`, `UNREA
 
 Entry Inkspire memakai ekspor publik `TTDDialogTrigger` dengan label dan ikon sendiri. Excalidraw 0.18.1 menempelkan badge AI tetap pada item tersebut, sehingga satu selector CSS yang diskop pada marker entry Flowchart menyembunyikannya; tidak ada patch vendor atau penyisipan DOM. Adapter `Editor.onChange` menangkap `openDialog.name === 'ttd'` untuk tab `text-to-diagram` maupun `mermaid`, menutup state native dengan `CaptureUpdateAction.NEVER` (tanpa entri undo), lalu membuka dialog Inkspire. Entri **Mermaid to Excalidraw** bawaan karena itu tidak lagi menyisipkan sendiri; keduanya memakai validator yang sama. Guard command palette yang lama tetap ada.
 
-Insertion bersifat aditif: scene saat ini (termasuk elemen `isDeleted`) disalin, skeleton dinormalisasi ulang dengan `regenerateIds` agar ID dan binding baru, seluruh elemen digeser ke pusat viewport, diberi satu `groupIds` diagram, dan dikirim lewat satu `updateScene` dengan `CaptureUpdateAction.IMMEDIATELY` sehingga menjadi satu langkah undo. Scene, history, aset, dan diagram lama tidak direset atau diganti.
+Insertion bersifat aditif: scene saat ini (termasuk elemen `isDeleted`) disalin, skeleton dinormalisasi ulang dengan `regenerateIds` agar ID dan binding baru, origin arrow/line dirapikan kembali, payload diperiksa ulang oleh `assertOutput` dan `assertBindings` sebelum update, seluruh elemen digeser ke pusat viewport, diberi satu `groupIds` diagram, dan dikirim lewat satu `updateScene` dengan `CaptureUpdateAction.IMMEDIATELY` sehingga menjadi satu langkah undo. Scene, history, aset, dan diagram lama tidak direset atau diganti.
 
 Setiap conversion membawa token revision, workspace ID, dan referensi editor API. Edit input/tab/arah, closing, unmount, atau penggantian workspace menginvalidasi token tersebut; kerja lokal yang sudah berjalan boleh selesai tetapi hasilnya tidak dipublikasikan dan tidak dibuatkan object URL. `workspaceId` reaktif di `useWorkspace` hanyalah mirror observable dari `identity.current` agar render ikut berubah ketika file bernama sama diganti; pemeriksaan terakhir selalu membaca `identity.current`. Blob URL preview direvoke saat diganti, dibuang, atau unmount. Closing tidak diklaim membatalkan computation.
 
