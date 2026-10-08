@@ -57,6 +57,12 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 - Hasil async yang masih pending kini dibuktikan pada **kedua mode** dengan menahan callback `canvas.toBlob` lalu melepasnya setelah closing dan penggantian workspace; klaim coverage pada dokumentasi dikoreksi mengikuti itu.
 - Preservasi geometri diukur per tahap: mutation, reload draft, dan import file `.excalidraw` dituntut delta 0 pada seluruh field persistent; hanya replay undo→redo yang diberi batas 4 px khusus geometry panah, dengan angka terukur dicatat. Drag vertex lewat **Edit arrow** dan penolakan token Mermaid cacat kini punya regression sendiri.
 
+### Fixed — 2026-10-08 (Review Flowchart putaran 2)
+
+- Regression hasil async basi kini menunggu controller selesai sebelum assertion negatif: `tests/flowchart-security.e2e.ts` menunggu tombol **Buat preview** kembali enabled setelah ekspor kanvas dilepas. Sebelumnya kedua assertion sudah benar selama `busy` masih aktif, sehingga tes bisa selesai sebelum hasil converter diterima.
+- Sinyal antrean hold yang kosong tidak dipakai sebagai pengganti; itu hanya membuktikan callback sudah dijadwalkan, bukan controller selesai. Tidak ada perubahan source aplikasi pada putaran ini.
+- Batas toleransi `redo` pada dokumentasi ditulis ulang sebagai fakta terukur (delta `arrow.width` 3,002894287382631 px pada siklus pertama, tanpa delta tambahan di atas `1e-9` pada siklus kedua dan ketiga, Keenam panah tetap `points[0] === [0, 0]`), bukan klaim bahwa penyesuaian mustahil dihilangkan dari sisi aplikasi.
+
 ## 0.1.0 — 2026-10-07
 
 ### Added

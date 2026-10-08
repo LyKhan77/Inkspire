@@ -92,6 +92,9 @@ test('a converter result released after closing and workspace replacement is nev
   await page.locator('.App-toolbar__extra-tools-trigger').click();
   await page.locator('[data-inkspire-flowchart-trigger]').click();
   await controlCanvasExports(page, false);
+  // The released PNG callback is asynchronous, so wait for the controller itself to settle before asserting: an empty
+  // hold queue only proves the callback was scheduled, and a busy controller keeps every negative assertion true by default.
+  await expect(dialog(page).getByRole('button', { name: 'Buat preview', exact: true })).toBeEnabled({ timeout: 25_000 });
 
   await expect(dialog(page).getByAltText('Preview flowchart', { exact: true })).toHaveCount(0);
   await expect(dialog(page).getByRole('button', { name: 'Tambahkan ke canvas', exact: true })).toBeDisabled();
