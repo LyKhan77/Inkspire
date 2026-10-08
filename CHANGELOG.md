@@ -53,7 +53,7 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 
 ### Verified — 2026-10-08 (Perbaikan review Flowchart)
 
-- Gate fresh setelah perbaikan F1/F2: typecheck exit 0; 103 tes unit/HTTP pada 14 files (1,02 detik); build exit 0; 46 E2E development lulus (1,6 menit); 45 E2E compiled production lulus dengan 1 skip yang hanya membentuk penundaan impor modul dev (59,0 detik).
+- Gate fresh setelah perbaikan F1/F2 pada HEAD branch `feat/flowchart`: typecheck exit 0; 103 tes unit/HTTP pada 14 files (966 ms); build exit 0 (1,48 detik); 46 E2E development lulus (1,5 menit); 45 E2E compiled production lulus dengan 1 skip yang hanya membentuk penundaan impor modul dev (57,0 detik).
 - Hasil async yang masih pending kini dibuktikan pada **kedua mode** dengan menahan callback `canvas.toBlob` lalu melepasnya setelah closing dan penggantian workspace; klaim coverage pada dokumentasi dikoreksi mengikuti itu.
 - Preservasi geometri diukur per tahap: mutation, reload draft, dan import file `.excalidraw` dituntut delta 0 pada seluruh field persistent; hanya replay undo→redo yang diberi batas 4 px khusus geometry panah, dengan angka terukur dicatat. Drag vertex lewat **Edit arrow** dan penolakan token Mermaid cacat kini punya regression sendiri.
 
