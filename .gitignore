@@ -4,6 +4,7 @@
 node_modules/
 dist/
 dist-server/
+.inkspire-lan/
 test-results/
 playwright-report/
 output/
