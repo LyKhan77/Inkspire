@@ -1,0 +1,49 @@
+{
+  "name": "inkspire",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "typecheck:client": "tsc --noEmit -p tsconfig.json",
+    "typecheck:server": "tsc --noEmit -p tsconfig.server.json",
+    "typecheck:tests": "tsc --noEmit -p tsconfig.tests.json",
+    "typecheck": "npm run typecheck:client && npm run typecheck:server && npm run typecheck:tests",
+    "assets:editor": "node scripts/copy-editor-assets.mjs",
+    "build": "npm run assets:editor && vite build && tsc -p tsconfig.server.json",
+    "dev": "npm run assets:editor && node --env-file-if-exists=.env --import tsx server/index.ts --dev",
+    "start": "node --env-file-if-exists=.env dist-server/server/index.js",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "@excalidraw/excalidraw": "0.18.1",
+    "@tabler/icons-react": "3.49.0",
+    "sharp": "0.35.5"
+  },
+  "overrides": {
+    "@radix-ui/react-tabs": "1.1.22",
+    "nanoid@3.3.3": "3.3.18",
+    "nanoid@4.0.2": "5.1.16",
+    "sass@1.51.0": "1.105.1",
+    "lodash-es": "4.18.1",
+    "katex": "0.18.2"
+  },
+  "devDependencies": {
+    "vite": "8.3.3",
+    "@vitejs/plugin-react": "6.1.2",
+    "typescript": "7.0.2",
+    "tsx": "4.23.15",
+    "vitest": "5.0.3",
+    "fake-indexeddb": "6.2.5",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.19.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
+  },
+  "license": "Apache-2.0"
+}

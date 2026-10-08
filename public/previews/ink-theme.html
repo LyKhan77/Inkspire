@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inkspire — Preview transisi tinta</title><link rel="icon" href="/ink.svg">
+<style>
+@font-face{font-family:Space;src:url('/fonts/space-grotesk.ttf');font-weight:300 700;font-display:swap}
+@font-face{font-family:Plex;src:url('/fonts/plex-mono.ttf');font-display:swap}
+*{box-sizing:border-box}body{margin:0;background:#e9e8df;color:#191919;font-family:Space,Arial,sans-serif}button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #ed5037;outline-offset:5px}
+.page{max-width:1320px;margin:auto;padding:40px 36px 28px}.intro{display:flex;justify-content:space-between;align-items:end;gap:28px;margin-bottom:30px}.eyebrow{font:11px Plex,monospace;letter-spacing:1px;margin:0 0 12px}.intro h1{font-size:clamp(28px,4vw,47px);font-weight:600;letter-spacing:-2px;line-height:1.08;margin:0}.intro>p{max-width:340px;font-size:14px;line-height:1.65;margin:0;color:#61615a}
+fieldset{border:0;padding:0;margin:0 0 22px}legend{font:11px Plex,monospace;margin-bottom:12px}.options{display:flex;gap:12px;flex-wrap:wrap}.options label{position:relative;cursor:pointer;display:flex;gap:12px;align-items:center;min-height:60px;border:2px solid #191919;padding:12px 18px;background:#f4f3ed}.options input{accent-color:#191919;width:16px;height:16px;margin:0}.options label:has(input:checked){background:#191919;color:#f4f3ed;box-shadow:3px 3px 0 #ed5037}.options strong{display:block;font-size:14px}.options small{display:block;font:10px Plex,monospace;opacity:.8;margin-top:4px}
+.studio-frame{position:relative;border:2px solid #191919;box-shadow:5px 5px 0 #191919;overflow:hidden;background:#fcfbf7}.studio{--ink:#191919;--paper:#fcfbf7;--surface:#f4f3ed;--wash:#e9e8df;--quiet:#61615a;color:var(--ink);background:var(--paper)}.studio[data-theme=dark]{--ink:#f0efe7;--paper:#1b1b1a;--surface:#252523;--wash:#363633;--quiet:#bdbdb3}
+.header{height:76px;background:var(--surface);border-bottom:2px solid var(--ink);display:flex;align-items:center;gap:28px;padding:0 22px}.brand{display:flex;align-items:center;gap:6px;font-weight:700;font-size:31px;letter-spacing:-1.9px}.ink-toggle{border:0;padding:8px;background:transparent;color:var(--ink);width:48px;height:48px;display:grid;place-items:center;border-radius:0}.ink-toggle:hover{background:var(--wash)}.ink-toggle svg{width:30px;height:32px;overflow:visible}.ink-toggle .droplet{transform-origin:16px 18px;transform:rotate(-12deg)}.ink-toggle .fleck{opacity:0}.workspace{border-left:1px solid var(--ink);padding-left:24px;font-size:14px;flex:1}.workspace small{display:block;font-size:10px;color:var(--quiet);margin-top:5px}.header-actions{display:flex;gap:16px;align-items:center;font-size:12px}.save{padding:9px 12px;border:2px solid var(--ink);box-shadow:3px 3px 0 #090909}.ai{padding:10px 12px;background:#ed5037;color:#191919;border:2px solid #191919;box-shadow:3px 3px 0 #090909;font-weight:600}
+.canvas{height:440px;position:relative}.toolbar{position:absolute;top:20px;left:50%;transform:translateX(-50%);display:flex;gap:3px;border:2px solid var(--ink);box-shadow:3px 3px 0 #090909;background:var(--surface);padding:6px}.tool{width:32px;height:30px;display:grid;place-items:center;font-size:19px}.tool.selected{background:var(--ink);color:var(--paper)}.tool:last-child{border-left:1px solid var(--quiet);margin-left:4px}.properties{position:absolute;top:20px;left:20px;width:150px;background:var(--surface);border:2px solid var(--ink);padding:14px;box-shadow:3px 3px 0 #090909}.property-title{font-size:11px;margin-bottom:10px}.swatches{display:flex;gap:9px;margin-bottom:22px}.swatches span{width:18px;height:18px;background:var(--swatch)}.swatches span:first-child{outline:2px solid var(--ink);outline-offset:2px}.font-options{display:flex;gap:8px;margin-bottom:22px}.font-options span{width:30px;height:28px;background:var(--wash);display:grid;place-items:center;font-size:13px}.font-options .selected{outline:2px solid var(--ink);outline-offset:1px;background:var(--paper)}.slider{height:3px;background:var(--wash);position:relative;margin:18px 0 6px}.slider:after{content:'';position:absolute;right:0;top:-4px;width:11px;height:11px;background:var(--ink)}
+.drawing{position:absolute;width:65%;height:75%;left:26%;top:21%;color:var(--ink)}.drawing text{fill:currentColor;font-family:Space,Arial,sans-serif}.drawing .brush{stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round}.drawing .accent{stroke:#ed5037}.hint{position:absolute;bottom:15px;left:20px;font:10px Plex,monospace;color:var(--quiet)}.footer{height:32px;border-top:1px solid var(--ink);background:var(--surface);color:var(--quiet);font-size:10px;padding:0 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}.theme-state{font-family:Plex,monospace;text-transform:uppercase}.transition-layer{position:absolute;inset:0;z-index:2;pointer-events:none}.guide{display:flex;justify-content:space-between;align-items:start;gap:24px;margin-top:25px}.guide p{font-size:13px;line-height:1.6;margin:0;max-width:650px}.guide .mono{font:11px Plex,monospace;white-space:nowrap}.tip{color:#61615a;margin-top:7px!important;font-size:11px!important}
+@media(max-width:760px){.page{padding:24px 18px}.intro{display:block;margin-bottom:22px}.intro>p{margin-top:16px;max-width:500px}.options{gap:8px}.options label{flex:1;min-width:145px;padding:10px}.header{padding:0 12px;gap:10px}.brand{font-size:24px}.workspace{padding-left:10px;font-size:12px}.header-actions .save,.header-actions>span{display:none}.ai{padding:7px}.properties{left:12px;width:120px;padding:11px}.toolbar{left:auto;right:12px;transform:none}.tool{width:25px}.drawing{width:66%;left:30%;top:30%;height:58%}.canvas{height:410px}.guide{display:block}.guide .mono{display:block;margin-top:14px}}
+@media(max-width:450px){.header{height:100px;flex-wrap:wrap;align-content:center}.workspace{flex:1}.header-actions{width:100%;justify-content:end;margin-top:-5px}.properties{top:70px;width:100px}.toolbar{right:10px;top:14px}.drawing{width:70%;left:28%;top:29%}.canvas{height:380px}.footer{padding:0 12px;font-size:9px}.guide .mono{font-size:10px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body><main class="page">
+<div class="intro"><div><p class="eyebrow">INKSPIRE / MOTION STUDY 01</p><h1>Satu tetes.<br>Suasana berganti.</h1></div><p>Klik ikon Ink di kiri header. Tinta gelap mengalir ke mode dark; tinta terang membuka kembali kertas.</p></div>
+<fieldset><legend>PILIH TRANSISI</legend><div class="options">
+<label><input type="radio" name="motion" value="bloom" checked><span><strong>A · Tinta mengembang</strong><small>650 ms · rekomendasi</small></span></label>
+<label><input type="radio" name="motion" value="wipe"><span><strong>B · Sapuan tinta</strong><small>520 ms · menyapu ke kanan</small></span></label>
+<label><input type="radio" name="motion" value="quiet"><span><strong>C · Tetes ringkas</strong><small>220 ms · gerak minimal</small></span></label>
+</div></fieldset>
+<div class="studio-frame" id="frame"><section class="studio" id="studio" data-theme="light" aria-label="Preview header dan canvas">
+<div class="header"><div class="brand"><button class="ink-toggle" id="ink-toggle" aria-label="Aktifkan dark mode" aria-pressed="false" title="Ganti tema">
+<svg viewBox="0 0 32 36" aria-hidden="true"><g class="droplet"><path d="M16 3C13 9 6 16 6 23a10 10 0 0 0 20 0C26 16 19 9 16 3Z" fill="currentColor"/><path d="M11 23a5 5 0 0 0 5 5" fill="none" stroke="var(--surface)" stroke-width="2" stroke-linecap="round"/></g><g class="fleck" fill="currentColor"><circle cx="3" cy="16" r="2"/><circle cx="29" cy="12" r="1.5"/><circle cx="26" cy="33" r="1.3"/></g></svg>
+</button><span>inkspire</span></div><div class="workspace">Eksplorasi tinta<small>Draft tersimpan di browser</small></div><div class="header-actions" aria-hidden="true"><span>Workspace⌄</span><span class="save">Simpan file</span><span class="ai">AI image ↗</span></div></div>
+<div class="canvas"><div class="toolbar" aria-hidden="true"><span class="tool selected">↖</span><span class="tool">□</span><span class="tool">◇</span><span class="tool">○</span><span class="tool">↗</span><span class="tool">╱</span><span class="tool">T</span><span class="tool">＋</span></div>
+<div class="properties" aria-hidden="true"><div class="property-title">Guratan</div><div class="swatches"><span style="--swatch:#1e1e1e"></span><span style="--swatch:#e03131"></span><span style="--swatch:#1971c2"></span></div><div class="property-title">Jenis font</div><div class="font-options"><span class="selected">Aa</span><span>A</span><span>⌘</span></div><div class="property-title">Ketebalan</div><div class="font-options"><span class="selected">━</span><span>═</span></div><div class="property-title">Keburaman</div><div class="slider"></div></div>
+<svg class="drawing" viewBox="0 0 650 310" role="img" aria-label="Sketsa ide, tinta, dan karya"><g class="brush" stroke-width="2.5"><path d="M47 80Q89 72 153 78L155 141Q92 147 45 139Z"/><path d="M245 82Q304 73 361 80L364 143Q303 149 247 140Z"/><path d="M452 79Q512 72 569 81L572 143Q518 149 455 140Z"/><path d="M159 110Q191 103 236 110M222 100L236 110 222 119M369 110Q409 103 444 109M430 100L444 109 430 120"/><path d="M312 154Q310 174 296 193"/><path class="accent" d="M238 210Q291 178 351 201Q383 214 349 230Q285 251 238 219Z" stroke-width="3"/><path d="M271 270Q321 265 353 270"/></g><text x="100" y="119" text-anchor="middle" font-size="23">ide</text><text x="304" y="119" text-anchor="middle" font-size="23">tinta</text><text x="513" y="119" text-anchor="middle" font-size="23">karya</text><text x="295" y="216" text-anchor="middle" font-size="16">mulai saja.</text><text x="311" y="296" text-anchor="middle" font-size="13">ruang untuk bereksperimen</text></svg>
+<span class="hint">Ruang yang sama. Suasana baru.</span></div>
+<div class="footer"><span>Canvas lokal · File milikmu</span><span>Indonesia · <span class="theme-state">LIGHT</span></span></div></section></div>
+<div class="guide"><div><p id="description">A — Tinta tumbuh dari ikon dengan tepi organik. Ikon menekan, memercik, lalu kembali menjadi tetes.</p><p class="tip">Preview desain terpisah. Coba dua arah; Enter/Space juga bekerja. Preferensi gerak minimum sistem dihormati.</p></div><span class="mono" role="status" id="status">LIGHT → klik ikon Ink</span></div>
+</main>
+<script>
+const studio=document.getElementById('studio'),frame=document.getElementById('frame'),button=document.getElementById('ink-toggle'),status=document.getElementById('status');
+const descriptions={bloom:'A — Tinta tumbuh dari ikon dengan tepi organik. Ikon menekan, memercik, lalu kembali menjadi tetes.',wipe:'B — Sapuan lebar berangkat dari kiri. Tepi tinta bergelombang, lalu seluruh ruang berganti.',quiet:'C — Tetes berputar singkat, sementara warna ruang berganti dengan lembut.'};
+let busy=false;
+document.querySelectorAll('[name=motion]').forEach(input=>input.addEventListener('change',()=>{document.getElementById('description').textContent=descriptions[input.value];}));
+function applyTheme(target,theme){target.dataset.theme=theme;target.querySelector('.theme-state').textContent=theme.toUpperCase();}
+function bloomShape(radius,x,y){return 'polygon('+Array.from({length:40},(_,i)=>{const angle=i*Math.PI*2/40;const ripple=1+.035*Math.sin(i*2.3)+.025*Math.cos(i*1.7);return (x+Math.cos(angle)*radius*ripple)+'px '+(y+Math.sin(angle)*radius*ripple)+'px';}).join(',')+')';}
+button.addEventListener('click',async()=>{
+  if(busy)return;
+  const theme=studio.dataset.theme==='light'?'dark':'light',mode=document.querySelector('[name=motion]:checked').value;
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  busy=true;button.setAttribute('aria-disabled','true');
+  let layer;
+  try{
+    if(!reduce&&typeof studio.animate==='function'){
+      const bounds=frame.getBoundingClientRect(),icon=button.getBoundingClientRect(),x=icon.left+icon.width/2-bounds.left-2,y=icon.top+icon.height/2-bounds.top-2;
+      const radius=Math.hypot(bounds.width,bounds.height)*1.1;
+      layer=studio.cloneNode(true);layer.removeAttribute('id');layer.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
+      layer.classList.add('transition-layer');layer.setAttribute('aria-hidden','true');layer.inert=true;applyTheme(layer,theme);frame.append(layer);
+      const options={duration:mode==='bloom'?650:mode==='wipe'?520:220,easing:'cubic-bezier(.22,.7,.2,1)',fill:'both'};
+      const frames=mode==='bloom'?[{clipPath:bloomShape(0,x,y)},{clipPath:bloomShape(radius,x,y)}]:mode==='wipe'?[{clipPath:'polygon(0 0,0 0,0 20%,0 38%,0 60%,0 82%,0 100%,0 100%)'},{clipPath:'polygon(0 0,110% 0,103% 20%,110% 38%,103% 60%,110% 82%,103% 100%,0 100%)'}]:[{opacity:0},{opacity:1}];
+      const droplet=button.querySelector('.droplet'),fleck=button.querySelector('.fleck');
+      for(const target of [droplet,layer.querySelector('.droplet')])target.animate([{transform:'rotate(-12deg) scale(1)'},{transform:'rotate(12deg) scale(.8,1.15)',offset:.25},{transform:'rotate(-18deg) scale(1.15,.85)',offset:.55},{transform:'rotate(-12deg) scale(1)'}],options);
+      for(const target of [fleck,layer.querySelector('.fleck')])target.animate([{opacity:0,transform:'scale(.5)'},{opacity:1,transform:'scale(1.15)',offset:.45},{opacity:0,transform:'scale(1.35)'}],options);
+      await layer.animate(frames,options).finished;
+    }
+    applyTheme(studio,theme);button.setAttribute('aria-pressed',String(theme==='dark'));button.setAttribute('aria-label',theme==='dark'?'Aktifkan light mode':'Aktifkan dark mode');
+    status.textContent=theme.toUpperCase()+' → klik ikon Ink';
+  }finally{layer?.remove();busy=false;button.removeAttribute('aria-disabled');}
+});
+</script></body></html>

@@ -1,0 +1,3 @@
+Embedded copyright/license metadata from bundled Xiaolai-Regular-019d66dcad46dc156b162d267f981c20.woff2 (@excalidraw/excalidraw 0.18.1)
+
+Copyright © 2020 LXGW

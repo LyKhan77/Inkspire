@@ -1,0 +1,5 @@
+Embedded copyright/license metadata from bundled Nunito-Regular-XRXI3I6Li01BKofiOc5wtlZ2di8HDIkhdTA3j6zbXWjgevT5.woff2 (@excalidraw/excalidraw 0.18.1)
+
+Copyright 2014 The Nunito Project Authors (https://github.com/googlefonts/nunito)
+
+https://scripts.sil.org/OFL

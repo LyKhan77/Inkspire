@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+dist-server/
+test-results/
+playwright-report/
+output/
+.cooper/
+.pi/
+.superpowers/
+.playwright-mcp/
+temp/
+docs/plans/
+docs/superpowers/plans/
