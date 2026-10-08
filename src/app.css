@@ -117,4 +117,19 @@ dialog p { font-size:14px; line-height:1.6; }
 .preview-section>.solid { width:100%; font-size:12px; }
 .download-result { width:100%; margin-top:12px; font-size:12px; }
 .privacy-note { margin:28px 0 0; color:var(--quiet); font-size:10px; line-height:1.7; }
+/* The Flowchart item replaces the native text-to-diagram entry, whose AI badge is hard-coded in 0.18.1. */
+.inkspire .dropdown-menu-item:has([data-inkspire-flowchart-trigger]) .DropDownMenuItemBadge { display:none !important; }
+.flowchart-dialog { width:min(1000px,calc(100vw - 32px)); max-width:calc(100vw - 32px); max-height:calc(100dvh - 32px); overflow:auto; }
+.flowchart-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.flowchart-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:24px; }
+.flowchart-grid section { min-width:0; }
+.flowchart-grid label { display:grid; gap:8px; margin:12px 0; font-size:13px; font-weight:650; }
+.flowchart-grid textarea { box-sizing:border-box; width:100%; resize:vertical; font-family:'IBM Plex Mono',monospace; font-size:12px; background:var(--paper); color:var(--ink); border:2px solid var(--line); border-radius:0; padding:10px; }
+.flowchart-grid select { background:var(--paper); color:var(--ink); border:2px solid var(--line); border-radius:0; padding:8px; font-size:12px; }
+.flowchart-dialog [role='tablist'] { display:flex; gap:8px; }
+.flowchart-dialog [role='tab'][aria-selected='true'] { outline:2px solid currentColor; outline-offset:2px; }
+.flowchart-dialog ul { margin:12px 0; padding-left:18px; }
+.flowchart-preview { display:block; width:100%; max-height:400px; object-fit:contain; background:#fcfbf7; border:1px solid var(--line); margin-bottom:8px; }
+.inkspire[data-theme='dark'] .flowchart-preview { filter:invert(1) hue-rotate(180deg); }
+@media (max-width:720px) { .flowchart-grid { grid-template-columns:minmax(0,1fr); gap:16px; } }
 .inkspire button:disabled { opacity:1; color:var(--quiet); background:var(--wash); border-color:var(--quiet); }

@@ -28,7 +28,13 @@ export function WorkspaceActions({ workspace, report, recovery }: { workspace: W
   }
   function askNew() { setMenu(false); setReplacement({ scene: workspace.empty(), name: t('Tanpa judul') }); }
   useEffect(() => {
+    // Flowchart is modal: workspace actions must not fire from inside it, but every other key behaves as before.
+    const flowchartModal = () => !!document.querySelector('dialog[data-flowchart-modal][open]');
     const shortcut = (event: KeyboardEvent) => {
+      if (flowchartModal()) {
+        if ((event.ctrlKey || event.metaKey) && ['s', 'o', '/', 'p', 'Backspace', 'Delete'].includes(event.key.length === 1 ? event.key.toLowerCase() : event.key)) { event.preventDefault(); event.stopImmediatePropagation(); }
+        return;
+      }
       if (!(event.ctrlKey || event.metaKey)) return;
       if (event.key.toLowerCase() === 's') { event.preventDefault(); event.stopImmediatePropagation(); save(); }
       if (event.key.toLowerCase() === 'o') { event.preventDefault(); event.stopImmediatePropagation(); input.current?.click(); }
@@ -36,6 +42,7 @@ export function WorkspaceActions({ workspace, report, recovery }: { workspace: W
       if (event.key === '/' || (event.key.toLowerCase() === 'p' && event.shiftKey)) { event.preventDefault(); event.stopImmediatePropagation(); setMenu(true); }
     };
     const drop = (event: DragEvent) => {
+      if (flowchartModal()) { event.preventDefault(); event.stopImmediatePropagation(); return; }
       const file = Array.from(event.dataTransfer?.files ?? []).find(f => /\.(excalidraw|json)$/i.test(f.name));
       if (file) { event.preventDefault(); event.stopImmediatePropagation(); void open(file); }
     };

@@ -11,9 +11,12 @@ import { useGeneration } from './features/ai/useGeneration';
 import { AIPanel } from './features/ai/AIPanel';
 import { useLanguage } from './features/editor/language';
 import type { Language } from './features/editor/language';
+import { useFlowchart } from './features/flowchart/useFlowchart';
+import { FlowchartDialog } from './features/flowchart/FlowchartDialog';
 export function App() {
   const { t, language, choose } = useLanguage();
   const workspace = useWorkspace(); const theme = useTheme();
+  const flowchart = useFlowchart({ workspaceId: workspace.workspaceId, getWorkspaceId: () => workspace.identity.current.id, getAPI: () => workspace.api.current });
   const generation = useGeneration(); const aiToggle = useRef<HTMLButtonElement>(null);
   const [panelOpen, setPanelOpen] = useState(false); const [error, setError] = useState('');
   const [insertTarget, setInsertTarget] = useState<{ id: string; name: string } | null>(null);
@@ -27,6 +30,10 @@ export function App() {
     return exportToBlob({ elements, appState: { ...state, exportBackground: false, exportWithDarkMode: false }, files: api.getFiles() });
   }
   function closePanel() { setPanelOpen(false); aiToggle.current?.focus(); }
+  function closeFlowchart() {
+    flowchart.close();
+    requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.editor .App-toolbar__extra-tools-trigger')?.focus());
+  }
   async function performInsert(targetId: string) {
     if (insertGuard.current || generation.state.kind !== 'success') return;
     const api = workspace.api.current; if (!api) return;
@@ -49,10 +56,11 @@ export function App() {
     </header>
     {error && <div className="error-banner" role="alert">{t(error)}<button aria-label={t('Tutup pesan')} onClick={() => setError('')}><IconX size={18} /></button></div>}
     <div className="work-area">
-      {workspace.restoreError ? <div className="recovery"><h1>{t('Draft gagal dipulihkan')}</h1><p>{t('Draft lama tetap disimpan. Buka file atau mulai canvas baru setelah konfirmasi.')}</p><WorkspaceActions workspace={workspace} report={setError} recovery /></div> : workspace.initialData ? <Editor initialData={workspace.initialData} onChange={workspace.onChange} excalidrawAPI={api => { workspace.api.current = api; }} theme={theme.theme} name={workspace.name} /> : <p className="restore-status">{t('Memulihkan draft…')}</p>}
+      {workspace.restoreError ? <div className="recovery"><h1>{t('Draft gagal dipulihkan')}</h1><p>{t('Draft lama tetap disimpan. Buka file atau mulai canvas baru setelah konfirmasi.')}</p><WorkspaceActions workspace={workspace} report={setError} recovery /></div> : workspace.initialData ? <Editor initialData={workspace.initialData} onChange={workspace.onChange} excalidrawAPI={api => { workspace.api.current = api; }} theme={theme.theme} name={workspace.name} onOpenFlowchart={flowchart.show} /> : <p className="restore-status">{t('Memulihkan draft…')}</p>}
       {panelOpen && <AIPanel generation={generation} workspaceId={workspace.identity.current.id} onClose={closePanel} snapshot={snapshot} insert={insert} inserting={inserting} />}
     </div>
     <footer className="app-footer"><span>{t('Canvas lokal · File milikmu')}</span><div className="footer-settings"><label>{t('Bahasa')} <select aria-label={t('Bahasa')} value={language} onChange={event => choose(event.target.value as Language)}><option value="id">Indonesia</option><option value="en">English</option></select></label><label className="system-theme"><input type="checkbox" checked={theme.choice === 'system'} onChange={event => theme.choose(event.target.checked ? 'system' : theme.theme)} />{t('Ikuti sistem')}</label></div></footer>
+    {flowchart.open && <FlowchartDialog flowchart={flowchart} onClose={closeFlowchart} />}
     {insertTarget && <ConfirmDialog title={t('Tambahkan ke workspace aktif?')} onClose={() => setInsertTarget(null)}><p>{t('Hasil berasal dari workspace lain. Tambahkan ke')} <strong>{insertTarget.name}</strong>?</p><div className="dialog-actions"><button onClick={() => setInsertTarget(null)}>{t('Batal')}</button><button className="accent" onClick={() => { const target = insertTarget.id; setInsertTarget(null); void performInsert(target); }}>{t('Tambahkan ke workspace ini')}</button></div></ConfirmDialog>}
   </main>;
 }

@@ -69,6 +69,15 @@ const english: Record<string, string> = {
   'Steps harus 20–75.': 'Steps must be 20–75.', 'CFG harus 1–3.': 'CFG must be 1–3.', 'Resolusi harus 1024.': 'Resolution must be 1024.',
   'Referensi harus PNG/JPEG valid, maksimal sisi 2048 px.': 'References must be valid PNG/JPEG with sides no larger than 2048 px.',
   'Ukuran referensi melebihi batas.': 'The reference exceeds the size limit.',
+  'Teks langkah': 'Steps', 'Input flowchart': 'Flowchart input', 'Arah flowchart': 'Flowchart direction',
+  'Atas ke bawah': 'Top to bottom', 'Kiri ke kanan': 'Left to right', 'Muat contoh': 'Load example',
+  'Buat preview': 'Create preview', 'Menyiapkan flowchart…': 'Preparing flowchart…',
+  'Preview flowchart': 'Flowchart preview', 'Tutup Flowchart': 'Close Flowchart',
+  'Gunakan kode Mermaid': 'Use Mermaid code', 'Salin Mermaid': 'Copy Mermaid', 'Kode Mermaid': 'Mermaid code',
+  'Kode disalin.': 'Code copied.', 'Pilih kode dan salin manual.': 'Select the code and copy it manually.',
+  'Baris': 'Line', 'Preview muncul setelah input divalidasi.': 'The preview appears after input validation.',
+  'Gunakan langkah per baris. Cabang Jika/If memakai dua spasi dan Ya/Yes atau Tidak/No.': 'Use one step per line. Jika/If branches use two spaces and Ya/Yes or Tidak/No.',
+  'Format terstruktur, tanpa AI. Preview masuk file setelah ditambahkan ke canvas.': 'Structured format, without AI. The preview enters the file after you add it to the canvas.',
 };
 export function translate(language: 'id' | 'en', message: string): string {
   return language === 'en' && Object.hasOwn(english, message) ? english[message]! : message;
