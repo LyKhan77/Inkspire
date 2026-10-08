@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseMermaid, serializeMermaid } from '../src/features/flowchart/mermaid';
 import { parseText, EXAMPLE } from '../src/features/flowchart/text';
 import { LIMITS } from '../src/features/flowchart/model';
+import { assertOutput } from '../src/features/flowchart/convert';
 
 describe('mermaid subset roundtrip', () => {
   it('roundtrips graph semantics and accepts inline shape declarations', () => {
@@ -70,5 +71,23 @@ describe('mermaid rejection', () => {
     const bounded = parseMermaid('flowchart TD\nA([Start]) --> B[Work]');
     expect(serializeMermaid(bounded)).toBe('flowchart TD\nn1(["Start"])\nn2["Work"]\nn1 --> n2');
     expect(LIMITS.canonical).toBe(64000);
+  });
+});
+
+describe('converter output boundary', () => {
+  it('rejects image fallback and executable/linkable output', () => {
+    expect(() => assertOutput({ elements: [{ type: 'image' }] })).toThrow('UNSUPPORTED_OUTPUT');
+    expect(() => assertOutput({ elements: [{ type: 'rectangle', link: 'https://example.com' }] })).toThrow('UNSUPPORTED_OUTPUT');
+    expect(() => assertOutput({ elements: [{ type: 'rectangle', x: Infinity }] }, true)).toThrow('UNSUPPORTED_OUTPUT');
+    expect(() => assertOutput({ elements: [{ type: 'rectangle' }], files: { asset: {} } })).toThrow('UNSUPPORTED_OUTPUT');
+  });
+  it('rejects empty, oversized and malformed element arrays', () => {
+    expect(() => assertOutput({ elements: [] })).toThrow('UNSUPPORTED_OUTPUT');
+    expect(() => assertOutput({ elements: Array.from({ length: LIMITS.elements + 1 }, () => ({ type: 'rectangle' })) })).toThrow('UNSUPPORTED_OUTPUT');
+    expect(() => assertOutput({ elements: [null] })).toThrow('UNSUPPORTED_OUTPUT');
+    expect(() => assertOutput({ elements: ['frame'] })).toThrow('UNSUPPORTED_OUTPUT');
+    expect(() => assertOutput({ elements: [{ type: 'arrow', points: [[1, 2], [3, Number.NaN]] }] }, true)).toThrow('UNSUPPORTED_OUTPUT');
+    expect(() => assertOutput({ elements: [{ type: 'arrow', points: [[1, 2, 3]] }] }, true)).toThrow('UNSUPPORTED_OUTPUT');
+    expect(() => assertOutput({ elements: [{ type: 'text', x: 0, y: 0, width: 10, height: 10 }] }, true)).not.toThrow();
   });
 });
