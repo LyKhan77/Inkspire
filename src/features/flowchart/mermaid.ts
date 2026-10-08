@@ -57,22 +57,28 @@ function splitChain(source: string, line: number): { tokens: string[]; labels: s
   return { tokens, labels };
 }
 
+/** One shape wrapper per token, innermost first. A leftover quote or bracket means the token is not a single declaration. */
+const SHAPES: { wrapper: RegExp; kind: Kind }[] = [
+  { wrapper: /^\(\[([\s\S]*)\]\)$/, kind: 'terminal' },
+  { wrapper: /^\[([\s\S]*)\]$/, kind: 'process' },
+  { wrapper: /^\{([\s\S]*)\}$/, kind: 'decision' },
+  { wrapper: /^\(([\s\S]*)\)$/, kind: 'terminal' },
+];
+const QUOTED = /^"([^"]*)"$/;
+
 function readToken(source: string, line: number, builder: GraphBuilder): string {
   const match = ID_WITH_TAIL.exec(source.trim());
   if (!match) throw new FlowchartError('MERMAID_SYNTAX', line);
   const id = match[1]!;
   const tail = match[2]!.trim();
   if (!tail) return builder.ref(id, line);
-  let kind: Kind;
-  let value: string;
-  if (tail.startsWith('([') && tail.endsWith('])')) { kind = 'terminal'; value = tail.slice(2, -2); }
-  else if (tail.startsWith('[') && tail.endsWith(']')) { kind = 'process'; value = tail.slice(1, -1); }
-  else if (tail.startsWith('{') && tail.endsWith('}')) { kind = 'decision'; value = tail.slice(1, -1); }
-  else if (tail.startsWith('(') && tail.endsWith(')')) { kind = 'terminal'; value = tail.slice(1, -1); }
-  else throw new FlowchartError('MERMAID_SYNTAX', line);
-  if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
-  else if (value.includes('"') || /[\[\]{}()]/u.test(value)) throw new FlowchartError('MERMAID_SYNTAX', line);
-  return builder.node(id, decode(value, line), kind, line);
+  const shape = SHAPES.find(candidate => candidate.wrapper.test(tail));
+  if (!shape) throw new FlowchartError('MERMAID_SYNTAX', line);
+  const value = shape.wrapper.exec(tail)![1]!;
+  const quoted = QUOTED.exec(value);
+  if (quoted) return builder.node(id, decode(quoted[1]!, line), shape.kind, line);
+  if (value.includes('"') || /[\[\]{}()]/u.test(value)) throw new FlowchartError('MERMAID_SYNTAX', line);
+  return builder.node(id, decode(value, line), shape.kind, line);
 }
 
 export function parseMermaid(input: string): FlowGraph {

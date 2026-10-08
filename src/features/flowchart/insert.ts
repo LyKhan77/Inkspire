@@ -2,7 +2,7 @@ import { CaptureUpdateAction, convertToExcalidrawElements, getCommonBounds, view
 import type { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types';
 import type { GroupId } from '@excalidraw/excalidraw/element/types';
 import { FlowchartError } from './model';
-import { assertBindings, assertOutput } from './convert';
+import { assertBindings, assertOutput, normalizeLinearElements } from './convert';
 import type { Converted } from './convert';
 
 /**
@@ -11,7 +11,7 @@ import type { Converted } from './convert';
  */
 export function insertFlowchart(api: ExcalidrawImperativeAPI, preview: Converted, canInsert: () => boolean): string {
   if (!canInsert()) throw new FlowchartError('STALE');
-  const elements = convertToExcalidrawElements(structuredClone(preview.skeleton), { regenerateIds: true });
+  const elements = normalizeLinearElements(convertToExcalidrawElements(preview.skeleton, { regenerateIds: true }));
   assertOutput({ elements }, true);
   assertBindings(elements);
   const state = api.getAppState();
@@ -28,6 +28,7 @@ export function insertFlowchart(api: ExcalidrawImperativeAPI, preview: Converted
     customData: index === 0 ? { ...element.customData, inkspireFlowchart: { schemaVersion: 1, diagramId, sourceMermaid: preview.sourceMermaid, inputMode: preview.inputMode } } : element.customData,
   }));
   if (!canInsert()) throw new FlowchartError('STALE');
+  assertOutput({ elements: inserted }, true);
   api.updateScene({
     elements: [...api.getSceneElementsIncludingDeleted(), ...inserted],
     appState: { selectedElementIds: Object.fromEntries(inserted.map(element => [element.id, true])), selectedGroupIds: { [diagramId]: true } },
