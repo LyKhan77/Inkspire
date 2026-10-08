@@ -19,10 +19,12 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@excalidraw/excalidraw": "0.18.1",
+    "@excalidraw/mermaid-to-excalidraw": "2.2.2",
+    "@tabler/icons-react": "3.49.0",
+    "mermaid": "11.17.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "@excalidraw/excalidraw": "0.18.1",
-    "@tabler/icons-react": "3.49.0",
     "sharp": "0.35.5"
   },
   "overrides": {
@@ -34,16 +36,16 @@
     "katex": "0.18.2"
   },
   "devDependencies": {
-    "vite": "8.3.3",
-    "@vitejs/plugin-react": "6.1.2",
-    "typescript": "7.0.2",
-    "tsx": "4.23.15",
-    "vitest": "5.0.3",
-    "fake-indexeddb": "6.2.5",
     "@playwright/test": "1.63.0",
     "@types/node": "24.19.1",
     "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0"
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "fake-indexeddb": "6.2.5",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "8.3.3",
+    "vitest": "5.0.3"
   },
   "license": "Apache-2.0"
 }
