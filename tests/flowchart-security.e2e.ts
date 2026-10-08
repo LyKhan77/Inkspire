@@ -51,6 +51,54 @@ function watchNativeDialog(page: Page) {
 
 const nativeMounts = (page: Page) => page.evaluate(() => (window as unknown as { inkspireNativeTtd: { mounts: number } }).inkspireNativeTtd.mounts);
 
+/**
+ * Defers the final canvas export so a converter result can be left pending and released on demand. Unlike delaying the
+ * converter module import, this also works in production, where the bundler inlines that module.
+ */
+function holdCanvasExports(page: Page) {
+  return page.addInitScript(() => {
+    const hold = { armed: false, deferred: [] as (() => void)[] };
+    const toBlob = HTMLCanvasElement.prototype.toBlob;
+    HTMLCanvasElement.prototype.toBlob = function (this: HTMLCanvasElement, callback: BlobCallback, type?: string, quality?: number) {
+      const canvas = this;
+      const invoke = () => toBlob.call(canvas, callback, type, quality);
+      if (hold.armed) hold.deferred.push(invoke); else invoke();
+    };
+    Object.defineProperty(window, 'inkspireCanvasHold', { value: hold });
+  });
+}
+
+const heldExports = (page: Page) => page.evaluate(() => (window as unknown as { inkspireCanvasHold: { deferred: (() => void)[] } }).inkspireCanvasHold.deferred.length);
+
+const controlCanvasExports = (page: Page, armed: boolean) => page.evaluate(arm => {
+  const hold = (window as unknown as { inkspireCanvasHold: { armed: boolean; deferred: (() => void)[] } }).inkspireCanvasHold;
+  hold.armed = arm;
+  if (!arm) for (const invoke of hold.deferred.splice(0)) invoke();
+}, armed);
+
+test('a converter result released after closing and workspace replacement is never published', async ({ page }) => {
+  await holdCanvasExports(page);
+  await ready(page);
+  await page.locator('.App-toolbar__extra-tools-trigger').click();
+  await page.locator('[data-inkspire-flowchart-trigger]').click();
+  await dialog(page).getByRole('button', { name: 'Muat contoh', exact: true }).click();
+  await controlCanvasExports(page, true);
+  await dialog(page).getByRole('button', { name: 'Buat preview', exact: true }).click();
+  await expect(dialog(page).getByRole('status')).toContainText('Menyiapkan flowchart');
+  await expect.poll(() => heldExports(page), { timeout: 25_000, message: 'the canvas export must really be pending' }).toBeGreaterThan(0);
+
+  await page.keyboard.press('Escape');
+  await importScene(page, emptyScene, 'Pengganti.excalidraw');
+  await page.locator('.App-toolbar__extra-tools-trigger').click();
+  await page.locator('[data-inkspire-flowchart-trigger]').click();
+  await controlCanvasExports(page, false);
+
+  await expect(dialog(page).getByAltText('Preview flowchart', { exact: true })).toHaveCount(0);
+  await expect(dialog(page).getByRole('button', { name: 'Tambahkan ke canvas', exact: true })).toBeDisabled();
+  await page.keyboard.press('Escape');
+  expect((await saveScene(page) as { elements: unknown[] }).elements).toHaveLength(0);
+});
+
 test('both native entries route to the same bounded local validator with no external traffic', async ({ page }) => {
   const traffic = watchNetwork(page);
   await watchNativeDialog(page);
@@ -114,8 +162,8 @@ test('native validator cannot be bypassed by adversarial labels that survive par
   expect((await saveScene(page) as { elements: unknown[] }).elements).toHaveLength(0);
 });
 
-test('a converter result that arrives after closing and workspace replacement is never published', async ({ page }) => {
-  test.skip(production, 'the bundler inlines the converter, so module latency can only be shaped in dev');
+test('a converter module import still pending after closing and workspace replacement is never published', async ({ page }) => {
+  test.skip(production, 'shaping converter module latency needs the dev code-splitting, which the production bundle inlines');
   await page.route('**/*mermaid*', async route => { await new Promise(resolve => setTimeout(resolve, 2500)); await route.continue(); });
   await ready(page);
   await page.locator('.App-toolbar__extra-tools-trigger').click();
