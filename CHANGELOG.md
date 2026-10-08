@@ -6,6 +6,7 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 
 ### Added
 
+- Header README dengan banner SVG editorial, wordmark Space Grotesk berbentuk path, serta ikon Ink animasi mandiri. Loop tetes/ripple memiliki jeda; elemen picture memilih banner statis untuk reduced motion. Warna mengikuti light/dark browser tanpa font atau resource eksternal.
 - Pilihan Indonesia/English di footer, tersimpan lokal. Shell, label editor, dialog, status, dan pesan error berganti tanpa mereset canvas, aset, nama workspace, prompt, atau undo.
 - Outline persisten pada pilihan properti teks/guratan aktif, termasuk font, ukuran, perataan, warna, dan stroke; mendukung light/dark.
 - Tema **tinta mengembang** dari ikon Ink kiri header: View Transition organik 650 ms dan animasi tetes, keyboard, guard klik cepat, serta cleanup interupsi. Reduced motion dan browser tanpa API memakai pergantian langsung.

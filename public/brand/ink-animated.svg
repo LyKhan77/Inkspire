@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="ink-title ink-description">
+  <title id="ink-title">Inkspire animated Ink mark</title>
+  <desc id="ink-description">A bead of ink falls into a soft droplet, settles, and sends out a vermilion ripple. Motion pauses between loops and respects reduced motion.</desc>
+  <style>
+    :root { --paper:#f4f3ed; --ink:#191919; --muted:#62625c; --accent:#ed5037; --rule:#cccac0; }
+    .paper { fill:var(--paper); } .ink { fill:var(--ink); }
+    .muted { fill:var(--muted); } .accent { fill:var(--accent); }
+    .ink-main { transform-box:fill-box; transform-origin:50% 100%; animation:ink-settle 6.6s ease-in-out infinite; }
+    .ink-bead { opacity:0; transform-box:fill-box; transform-origin:center; animation:ink-fall 6.6s ease-in-out infinite; }
+    .ink-ring { opacity:0; transform-box:fill-box; transform-origin:center; animation:ink-ripple 6.6s ease-out infinite; }
+    .ink-spark { transform-box:fill-box; transform-origin:center; animation:ink-spark 6.6s ease-in-out infinite; }
+    .swash { stroke-dasharray:720; stroke-dashoffset:0; animation:ink-write 6.6s ease-in-out infinite; }
+    @keyframes ink-settle { 0%,12%,48%,100% { transform:scale(1,1); } 19% { transform:scale(.94,1.06); } 27% { transform:scale(1.07,.94); } 37% { transform:scale(.985,1.02); } }
+    @keyframes ink-fall { 0%,6% { opacity:0; transform:translateY(-8px) scale(.6); } 10% { opacity:1; transform:translateY(0) scale(1); } 19% { opacity:1; transform:translateY(31px) scale(.65,1.35); } 22%,100% { opacity:0; transform:translateY(41px) scale(.3); } }
+    @keyframes ink-ripple { 0%,19%,65%,100% { opacity:0; transform:scale(.45,.75); } 24% { opacity:.65; transform:scale(.65,.9); } 45% { opacity:0; transform:scale(1.18,1.15); } }
+    @keyframes ink-spark { 0%,18%,52%,100% { transform:scale(1); } 27% { transform:scale(1.2); } }
+    @keyframes ink-write { 0%,8% { stroke-dashoffset:720; } 42%,100% { stroke-dashoffset:0; } }
+    @media (prefers-color-scheme:dark) { :root { --paper:#22221f; --ink:#f4f3ed; --muted:#b2b1a7; --rule:#494940; } }
+    @media (prefers-reduced-motion:reduce) { .ink-main,.ink-bead,.ink-ring,.ink-spark,.swash { animation:none; } .ink-bead,.ink-ring { display:none; } }
+</style>
+
+      <ellipse class="ink-ring" cx="128" cy="210" rx="75" ry="13" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      <circle class="ink-bead ink" cx="128" cy="23" r="6"/>
+      <g class="ink-main">
+        <path class="ink" d="M128 51C118 70 91 103 77 128C54 169 75 199 107 207C147 218 185 196 185 160C185 132 150 90 128 51Z"/>
+        <path class="paper" opacity=".78" d="M99 126C95 136 92 147 94 159C95 164 98 165 101 162C105 158 103 151 106 141L114 119C116 111 110 109 106 114Z"/>
+      </g>
+      <path class="accent ink-spark" d="M199 79L202 91L214 94L202 97L199 109L196 97L184 94L196 91Z"/>
+      <circle class="ink" cx="57" cy="173" r="4"/>
+      <circle class="accent" cx="181" cy="226" r="3.5"/>
+
+</svg>

@@ -1,3 +1,16 @@
+<picture>
+  <source media="(prefers-reduced-motion: reduce)" srcset="public/brand/readme-header-static.svg" />
+  <img src="public/brand/readme-header.svg" alt="Inkspire — Your ideas. Your canvas. Animated Ink branding." width="1280" />
+</picture>
+
+<p align="center">
+  <strong>Draw freely. Imagine further.</strong><br />
+  Canvas pribadi · Native Excalidraw · Gambar AI melalui MaPic<br />
+  <a href="WORKFLOW.md">Mulai menggunakan</a> ·
+  <a href="ARCHITECTURE.md">Arsitektur</a> ·
+  <a href="CHANGELOG.md">Changelog</a>
+</p>
+
 # Inkspire
 
 Canvas pribadi, diagram native Excalidraw, dan gambar AI melalui MaPic. Workspace disimpan lokal; aplikasi langsung membuka canvas tanpa akun.
@@ -5,6 +18,8 @@ Canvas pribadi, diagram native Excalidraw, dan gambar AI melalui MaPic. Workspac
 Repository: [LyKhan77/Inkspire](https://github.com/LyKhan77/Inkspire).
 
 Dokumentasi: [Architecture](ARCHITECTURE.md), [Workflow](WORKFLOW.md), [Changelog](CHANGELOG.md), [panduan kontributor/agent](AGENTS.md), dan [kontrak MaPic](docs/mapic-contract.md).
+
+Branding SVG mandiri: [banner README](public/brand/readme-header.svg), [fallback statis](public/brand/readme-header-static.svg), dan [ikon Ink animasi](public/brand/ink-animated.svg). Warna mengikuti light/dark browser; header memilih versi statis saat reduced motion aktif. Animasi dekoratif memakai CSS tanpa JavaScript atau resource eksternal.
 
 ## Menjalankan
 

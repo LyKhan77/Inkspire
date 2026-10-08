@@ -2,6 +2,8 @@
 
 Source Inkspire berlisensi [Apache-2.0](LICENSE). Notice berikut berlaku untuk komponen pihak ketiga yang dipakai; komponen tersebut tetap mengikuti lisensinya masing-masing.
 
+Banner SVG `public/brand/readme-header.svg` dan `public/brand/readme-header-static.svg` memakai outline glyph dari font Space Grotesk dan IBM Plex Mono lokal. Teks lisensi OFL font tetap disertakan di `public/fonts/`; SVG tidak memuat atau mendistribusikan file font tambahan.
+
 | Komponen | Notice |
 | --- | --- |
 | Excalidraw 0.18.1 | MIT; `public/excalidraw/licenses/Excalidraw.txt` |
