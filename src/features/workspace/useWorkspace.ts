@@ -16,6 +16,8 @@ export function useWorkspace() {
   const [status, setStatus] = useState('Memulihkan draft…');
   const [restoreError, setRestoreError] = useState(false);
   const identity = useRef<{ id: string; name: string; revision: number }>({ id: crypto.randomUUID(), name, revision: 0 });
+  // Observable mirror of identity.current.id so a same-name replacement can invalidate render output.
+  const [workspaceId, setWorkspaceId] = useState(identity.current.id);
   const autosave = useRef<ReturnType<typeof createAutosave> | null>(null);
   const api = useRef<ExcalidrawImperativeAPI | null>(null);
   const suppressed = useRef(false);
@@ -39,6 +41,7 @@ export function useWorkspace() {
           scene = restore(JSON.parse(draft.sceneJSON), null, null);
           scene.appState = { ...scene.appState, scrollX: draft.viewport.scrollX, scrollY: draft.viewport.scrollY, zoom: { value: draft.viewport.zoom as AppState['zoom']['value'] } };
           identity.current = { id: draft.workspaceId, name: draft.name, revision: draft.revision }; setName(draft.name);
+          setWorkspaceId(draft.workspaceId);
         }
         setInitialData(scene); setStatus(draft ? 'Draft tersimpan di browser' : 'Menyimpan draft…');
       } catch { if (!disposed) { setRestoreError(true); setStatus('Draft gagal dibaca'); } }
@@ -60,6 +63,7 @@ export function useWorkspace() {
   function replace(scene: Scene, newName = 'Tanpa judul') {
     const editor = api.current; suppressed.current = true;
     identity.current = { id: crypto.randomUUID(), name: newName, revision: 1 }; setName(newName); last.current = '';
+    setWorkspaceId(identity.current.id);
     if (editor) {
       editor.resetScene({ resetLoadingState: true }); editor.addFiles(Object.values(scene.files));
       editor.updateScene({ elements: scene.elements, appState: { ...scene.appState, selectedElementIds: {} }, captureUpdate: CaptureUpdateAction.NEVER }); editor.history.clear();
@@ -69,5 +73,5 @@ export function useWorkspace() {
     } else { setInitialData(scene); setStatus('Draft belum tersimpan'); suppressed.current = false; }
     setRestoreError(false);
   }
-  return { initialData, name, rename, status, restoreError, onChange, api, identity, replace, empty, get dirty() { return status !== 'Draft tersimpan di browser'; } };
+  return { initialData, workspaceId, name, rename, status, restoreError, onChange, api, identity, replace, empty, get dirty() { return status !== 'Draft tersimpan di browser'; } };
 }
