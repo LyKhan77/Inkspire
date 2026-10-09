@@ -19,7 +19,8 @@
     "lan:serve": "node --env-file-if-exists=.env dist-server/server/lan-cli.js",
     "test:lan": "node --import tsx tests/network-caddy.ts",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:docker": "node --import tsx tests/docker-smoke.ts"
   },
   "dependencies": {
     "@excalidraw/excalidraw": "0.18.1",
