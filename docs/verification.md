@@ -292,7 +292,7 @@ Review 8 Oktober menyatakan REQUEST CHANGES: gate Caddy nyata gagal karena HTTP 
 | Gate | Hasil |
 | --- | --- |
 | `rtk proxy env PATH="<caddy-dir>:$PATH" npm run test:lan` | Exit 0 — `PASS: Caddy config, verified TLS, origin guards, private paths and mock generation`, 0,66 detik |
-| Run berurutan tambahan (4x, termasuk via `node --import tsx`) | Exit 0 semua; tidak ada flake |
+| Run berurutan pada harness akhir | Exit 0 semua (2x langsung, setelah perbaikan race CA dan guard child digabung); total 7 run exit 0 sepanjang putaran termasuk via `npm run test:lan` |
 | Assert satu listener (`caddy adapt` config operator + fixture) | Lulus — `["<ip>:<port>"]` tunggal untuk site kanonis dan fallback |
 | Assert 403 eksplisit untuk `Origin` asing, `Host` asing, `Origin` `http://` pada port HTTPS, dan `GET /` dengan `Host` asing | Lulus; frontend document tidak pernah disajikan ke Host asing |
 | Assert CA tak-tepercaya dan SNI asing | Lulus — `UNABLE_TO_GET_ISSUER_CERT_LOCALLY` dan kegagalan handshake |
@@ -328,7 +328,7 @@ Seluruh run memakai port tinggi tidak baku (18443–18445) dan hanya mengirim si
 
 ### Suite regresi pada state ini
 
-`rtk npm run typecheck` exit 0; `rtk npm test` exit 0 — 119 tests, 17 files (~1,0 detik); `rtk npm run build` exit 0; `rtk npm run test:lan` exit 0 (Caddy pada PATH); `rtk npm run test:e2e` exit 0 — 46 tests, 1,6 menit; `rtk proxy env INKSPIRE_TEST_MODE=production npm run test:e2e` exit 0 — 45 lulus + 1 di-skip, 57,4 detik; `rtk git diff --check` exit 0. Unit LAN kini 8 tests di `tests/network-config.test.ts`; positive CLI test memakai klasifikasi RFC 1918 (`10/8`, `172.16/12`, `192.168/16`) dan `test.skipIf` agar tidak tercatat lulus tanpa assertion ketika tidak ada interface privat.
+`rtk npm run typecheck` exit 0; `rtk npm test` exit 0 — 119 tests, 17 files (~1,0 detik); `rtk npm run build` exit 0; `rtk npm run test:lan` exit 0 (Caddy pada PATH); `rtk npm run test:e2e` exit 0 — 46 tests, 1,6 menit; `rtk proxy env INKSPIRE_TEST_MODE=production npm run test:e2e` exit 0 — 45 lulus + 1 di-skip, 57,1 detik. Kedua suite browser dijalankan ulang pada HEAD commit perubahan ini, setelah source tidak berubah sejak run sebelumnya; `rtk git diff --check` exit 0. Unit LAN kini 8 tests di `tests/network-config.test.ts`; positive CLI test memakai klasifikasi RFC 1918 (`10/8`, `172.16/12`, `192.168/16`) dan `test.skipIf` agar tidak tercatat lulus tanpa assertion ketika tidak ada interface privat.
 
 ### Masih pending
 
