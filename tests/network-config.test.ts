@@ -21,6 +21,19 @@ test('explicit interface and no implicit localhost or wildcard fallback', () => 
   expect(text).not.toMatch(/0\.0\.0\.0|header_up|MAPIC|file_server/u);
 });
 
+test('non-canonical Host is rejected on the same LAN listener', () => {
+  const text = renderCaddyfile(config, '/tmp/inkspire');
+  expect(text).toContain('https://192.168.1.20:8443 {');
+  expect(text).toContain('https://:8443 {');
+  // The fallback must share the explicit LAN bind and never open a wildcard or extra port.
+  expect(text.match(/bind 192\.168\.1\.20/gu)).toHaveLength(2);
+  expect(text).not.toMatch(/https:\/\/\*|0\.0\.0\.0|bind :|:\s*80\b/u);
+  const fallback = text.split('https://:8443 {')[1]!;
+  expect(fallback).toContain('respond 403');
+  expect(fallback).not.toContain('reverse_proxy');
+  expect(fallback).not.toMatch(/https?:\/\//u);
+});
+
 test('generated storage path stays absolute and outside dist', () => {
   const text = renderCaddyfile(config, '/tmp/inkspire root');
   expect(text).toContain('"');
@@ -80,12 +93,22 @@ test('CLI rejects invalid arguments and localhost config before spawning Caddy',
   await expect(stat(join(root, '.inkspire-lan'))).rejects.toMatchObject({ code: 'ENOENT' });
 });
 
-test('CLI write-only creates config and never starts Caddy', async () => {
-  const addresses = Object.values(networkInterfaces()).flatMap(items => items ?? [])
-    .filter(item => item.family === 'IPv4').map(item => item.address);
-  const lanIP = addresses.find(ip => ['10.', '192.168.', '172.'].some(prefix => ip.startsWith(prefix))
-    && !ip.startsWith('169.254.'));
-  if (!lanIP) return; // No private IPv4 interface available in this environment.
+/**
+ * RFC 1918 only: 10/8, 172.16/12, 192.168/16. A bare `172.` prefix would also match
+ * publicly routable space such as 172.1.2.3.
+ */
+function isPrivateIPv4(address: string): boolean {
+  const [first, second] = address.split('.').map(Number);
+  if (!Number.isInteger(first) || !Number.isInteger(second)) return false;
+  return first === 10 || (first === 172 && second >= 16 && second <= 31) || (first === 192 && second === 168);
+}
+
+const lanIP = Object.values(networkInterfaces()).flatMap(items => items ?? [])
+  .filter(item => item.family === 'IPv4' && !item.internal)
+  .map(item => item.address)
+  .find(isPrivateIPv4);
+
+test.skipIf(!lanIP)('CLI write-only creates config and never starts Caddy', async () => {
   const root = await mkdtemp(join(tmpdir(), 'inkspire-lan-cli-ok-')); roots.push(root);
   const child = cli(root, ['--write-only'], { PATH: process.env.PATH,
     INKSPIRE_PORT: '4193', INKSPIRE_PUBLIC_ORIGIN: `https://${lanIP}:18443`,

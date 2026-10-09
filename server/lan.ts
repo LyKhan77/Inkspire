@@ -22,7 +22,8 @@ export function assertLANInterface(config: AppConfig, addresses: readonly string
 
 export function renderCaddyfile(config: AppConfig, root: string): string {
   const origin = lanOrigin(config);
-  const ip = new URL(origin).hostname;
+  const url = new URL(origin);
+  const ip = url.hostname;
   const storage = JSON.stringify(resolve(root, LAN_ROOT, 'data'));
   return `{
   admin off
@@ -39,6 +40,12 @@ ${origin} {
   bind ${ip}
   tls internal
   reverse_proxy 127.0.0.1:${config.port}
+}
+
+https://:${url.port} {
+  bind ${ip}
+  tls internal
+  respond 403
 }
 `;
 }
