@@ -93,11 +93,15 @@ Prefix seluruh perintah shell yang dijalankan agent dengan `rtk`. Gunakan `rtk p
 | Jalankan proxy LAN foreground | `rtk npm run lan:serve` |
 | Gate Caddy HTTPS terisolasi | `rtk npm run test:lan` |
 | Gate Docker Linux opt-in | `rtk npm run test:docker` (IP LAN dan image eksplisit) |
+| Quickstart Docker pada Linux | `rtk proxy ./scripts/docker.sh init` → edit `.env.docker` → `rtk proxy ./scripts/docker.sh up` |
+| Status/stop/export CA Docker | `rtk proxy ./scripts/docker.sh status`, `down`, atau `export-ca` |
 | Instal browser tes | `rtk proxy npx playwright install chromium` |
 | E2E development | `rtk npm run test:e2e` |
 | E2E compiled production | `rtk proxy env INKSPIRE_TEST_MODE=production npm run test:e2e` |
 
 Jalankan dari root proyek. Build diperlukan sebelum start dan E2E production. Harness memakai port 4183/4184 dengan mock dan environment eksplisit; jangan mengarahkannya ke MaPic nyata atau memakai ulang server pengguna.
+
+Helper shell menentukan root dari lokasi script. Ia membuat env mode 0600 tanpa overwrite, memakai project `inkspire`, menolak platform/context di luar target, dan tidak mengeksekusi `.env.docker`. `up` build/recreate seluruh service; `down` mempertahankan volume. Tes helper memakai Docker/uname fixture tanpa daemon; hasilnya tidak menggantikan gate container Linux.
 
 ## 6. Coding Conventions
 

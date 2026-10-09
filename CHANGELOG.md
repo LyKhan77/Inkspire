@@ -6,6 +6,8 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 
 ### Added
 
+- Quickstart Docker langsung pada README dan helper executable `scripts/docker.sh`: init private/idempotent, Linux/context/config preflight, build/recreate, status, stop retained volume dan export root CA publik. Env file tidak dieksekusi sebagai shell; command memakai root checkout dan project konsisten. Trust device tetap manual.
+
 - Packaging Docker LAN: image Node 24 Linux multi-stage, build context allowlist, runtime non-root, dan Compose `lan-config`/`app`/`proxy` dengan host networking. Companion tetap loopback; token MaPic hanya pada environment runtime `app`, dan PKI berada pada volume retained.
 - CLI healthcheck companion dengan Host kanonis, timeout terbatas dan error generik tanpa endpoint/generation baru; enam regression mencakup readiness, Host, mode, config dan stalled request.
 - Harness opt-in `npm run test:docker` untuk TLS, guard, mock T2I/I2I, satu slot, isolasi token, stop dan CA retention pada Linux. Gate container Linux belum dijalankan; deployment server/device tetap pending. Operasi dan rollback: [panduan Docker](docs/docker-deployment.md).
@@ -82,6 +84,11 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 - Compose v2.40.3 menerima fixture `config --quiet`; hasil resolved config diperiksa untuk runtime non-root/read-only, host networking, isolasi token, startup dependencies dan origin wajib. Tidak memakai env operator atau daemon startup.
 - Gate Caddy 2.11.7 pada loopback dengan TLS/hostname terverifikasi dan mock generation lulus; production E2E 45 lulus, satu skip existing (57,7 detik).
 - `test:docker` menolak macOS sebelum Docker/listener/fixture. Build image, Linux container gate, MaPic nyata dan server/device acceptance belum dijalankan; tidak ada deployment/push atau service background baru.
+
+### Verified — 2026-10-09 (Docker quickstart)
+
+- Syntax Bash dan direct help invocation lulus; 15 regression helper memakai Docker/uname fixture tanpa daemon, listener, env operator atau GPU. Init/arg guards, native-host preflight, private/env isolation, safe config failure, build/recreate, status, stop retained volume dan certificate-only export terverifikasi.
+- Typecheck client/server/tests lulus; seluruh unit/HTTP 140 tests pada 19 files lulus (3,91 detik). Gate container Linux/server/device tetap pending; tidak ada deployment/push atau local service startup.
 
 ## 0.1.0 — 2026-10-07
 

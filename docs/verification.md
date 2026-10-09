@@ -362,3 +362,21 @@ Compose validation memakai env fixture dengan sentinel saja dan override `INKSPI
 Build image Linux dan probe Node 24/non-root/Sharp/compiled paths belum dijalankan. `npm run test:docker` telah dibuat untuk menguji actual host interface, volume UID bootstrap, HTTPS/CA, mock T2I/I2I, satu slot, token isolation, stop dan CA retention, tetapi belum mendapat runtime Linux yang diotorisasi. Test container tidak dapat diganti oleh syntax Compose atau gate Caddy loopback macOS. Deployment server dan sign-off browser/device nyata juga pending; MaPic nyata memerlukan instruksi terpisah.
 
 Operasi dan rollback: [deployment Docker](docker-deployment.md). Native execution report: `temp/prompt/inkspire-docker-deployment-execution-report.md` (ignored). Historical spec/plan tetap dipertahankan; checkpoint ini mencatat progres tanpa mengubah catatan perencanaan.
+
+
+## Docker quickstart — 9 Oktober 2026
+
+README sekarang memuat langkah langsung melalui `scripts/docker.sh`: init private, edit `.env.docker`, up; status/down/export-ca dan help tersedia. Helper Bash tidak mengubah arsitektur Compose, API, persistence atau token ownership.
+
+| Pemeriksaan | Hasil aktual |
+| --- | --- |
+| Red regression helper | 15 gagal karena script belum tersedia |
+| Green regression helper | 15 lulus (3,66 detik) setelah normalize realpath fixture macOS |
+| `bash -n scripts/docker.sh` | Exit 0 |
+| `./scripts/docker.sh help` | Exit 0, tanpa init file atau Docker calls |
+| `npm run typecheck` | Client/server/tests exit 0 |
+| `npm test` | 140 lulus, 19 files, 3,91 detik |
+
+Fixtures menjalankan Bash dengan Docker/uname palsu pada PATH terisolasi dan temp directory berspasi. Tes membuktikan private mode 0600 dan existing config retained, extra-arg/OS/context/rootless/Desktop rejection, config error tidak membocorkan sentinel, env tidak dieksekusi sebagai shell, root checkout dan project konsisten, ambient Inkspire overrides diabaikan, build/recreate/status sequence, stop tanpa --volumes dan export hanya root.crt. Path macOS /var vs /private/var dinormalisasi pada fixture agar assertion menggunakan physical path yang sama dengan script.
+
+Tidak ada Docker daemon startup, container/listener LAN, env operator, generation GPU nyata, deployment, trust installation, push atau merge pada tugas ini. Regression aplikasi/browser sebelumnya tidak diulang karena helper tidak mengubah source aplikasi/build; hasil lama tetap historis. Gate image/container Linux dan server/device acceptance belum dijalankan.

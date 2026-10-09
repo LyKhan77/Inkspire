@@ -64,6 +64,8 @@ Tanpa companion di terminal 1, Caddy tidak memiliki upstream dan aplikasi menjaw
 
 Deployment server memakai [panduan Docker LAN](docs/docker-deployment.md). Targetnya Docker Engine Linux native dengan Compose, satu IPv4 privat eksplisit, dan MaPic yang reachable dari host. Salin `deploy/docker.env.example` ke `.env.docker` pada server; env ini runtime-only dan hanya `app` menerima kredensial.
 
+Quickstart menggunakan `./scripts/docker.sh init`, edit `.env.docker`, lalu `./scripts/docker.sh up`. Helper memvalidasi Docker native/context, membangun image dan recreate semua service pada project `inkspire`. `status`, `down`, `export-ca` dan `help` memakai script yang sama. Init mempertahankan file existing dan membuat file baru mode 0600; stop mempertahankan volume. Trust device manual. Environment tidak di-source/eval dan konfigurasi diambil dari file checkout ini, bukan override Inkspire pada shell. Command Compose manual berikut tetap tersedia:
+
 ```sh
 docker compose -p inkspire --env-file .env.docker config --quiet
 docker compose -p inkspire --env-file .env.docker build lan-config

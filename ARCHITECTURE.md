@@ -52,6 +52,8 @@ Packaging server memakai `Dockerfile` multi-stage Node 24 Linux: frontend dan co
 
 Healthcheck CLI `server/docker-healthcheck.ts` mengirim HEAD `/` ke loopback dengan Host canonical dan timeout terbatas. Ini memeriksa companion/static serving tanpa endpoint baru atau MaPic call. TLS proxy dan readiness service diperiksa terpisah; internal CA tetap memerlukan trust manual. [Panduan Docker](docs/docker-deployment.md) mencakup transfer, konfigurasi, mock gate Linux dan rollback. Gate container serta acceptance server/device masih pending.
 
+`scripts/docker.sh` adalah wrapper operasi Compose: init file private, validasi platform/context/config, build/recreate, status, stop retained volume dan public CA export. Script menentukan root dari lokasinya, memakai project `inkspire` secara konsisten dan tidak mengevaluasi file environment sebagai shell. Kontrak API, binding, persistence dan credential ownership tetap mengikuti Compose existing.
+
 ## Stack dan struktur
 
 Versi dependency dipin di [package.json](package.json) dan [package-lock.json](package-lock.json). Runtime proyek adalah Node.js `24.x`.

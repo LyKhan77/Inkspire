@@ -4,6 +4,27 @@ Mode ini menargetkan Docker Engine Linux native dengan Compose v2. Konfirmasi OS
 
 Status saat ini: packaging dan harness sudah diimplementasikan. Gate container Linux, deployment server, serta acceptance perangkat nyata masih pending. Verifikasi aktual dicatat di [verification.md](verification.md).
 
+## Quickstart dengan script
+
+[scripts/docker.sh](../scripts/docker.sh) memakai Bash dan membungkus Compose existing. Script dapat dipanggil dari direktori mana pun; root proyek ditentukan dari lokasinya. Tidak memerlukan npm/Node pada host production.
+
+```sh
+./scripts/docker.sh init
+nano .env.docker
+./scripts/docker.sh up
+```
+
+`init` membuat template private mode 0600, dan mempertahankan file existing. Edit origin LAN dan konfigurasi MaPic sesuai tabel di bawah memakai editor pilihan Anda. `up` memeriksa Linux/native/rootful daemon serta context lokal, memvalidasi config tanpa mencetak environment, membangun image dan recreate semua service. Script memakai project `inkspire` dan `.env.docker` dari checkout ini, membersihkan override `INKSPIRE_PORT`, `INKSPIRE_PUBLIC_ORIGIN`, `INKSPIRE_IMAGE` dalam proses script, dan menetapkan `INKSPIRE_ENV_FILE` secara eksplisit. File environment tidak di-source/eval.
+
+| Perintah | Operasi |
+| --- | --- |
+| `./scripts/docker.sh status` | Status semua service project ini |
+| `./scripts/docker.sh export-ca` | Export hanya root certificate publik ke `inkspire-lan-root.crt` |
+| `./scripts/docker.sh down` | Stop project ini dengan volume PKI retained |
+| `./scripts/docker.sh help` | Bantuan tanpa efek samping |
+
+Trust certificate/fingerprint tetap manual. Status startup belum membuktikan TLS/MaPic readiness. `up` kembali melakukan recreate; stop/recreate selama generation dapat meninggalkan outcome unknown. Untuk update/rollback, pilih image tag dan config yang sesuai dahulu. Perintah Compose manual tetap tersedia di bawah. Regression helper memakai fixture CLI saja; gate container Linux masih pending.
+
 ## Transfer dan konfigurasi
 
 Pindahkan checkout atau arsip **tracked source pada commit yang disetujui**, bukan seluruh folder kerja. Jangan membawa `.env` device, `temp`, dependency/build macOS, file canvas pribadi, atau PKI lama tanpa keputusan operator. Image membangun frontend, companion dan dependency native Linux dari lockfile.

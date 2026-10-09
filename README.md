@@ -51,6 +51,28 @@ Packaging production tersedia untuk **Docker Engine Linux native** pada LAN MaPi
 
 Ikuti [panduan deployment Docker](docs/docker-deployment.md) untuk transfer source, build, start/stop, sertifikat, dan rollback. Gate container Linux serta acceptance server/device masih pending; hasil tes lokal tidak membuktikan deployment. Development tetap memakai `npm run dev`.
 
+### Quickstart Docker
+
+Pada server Linux dengan Bash, Docker Engine dan Compose v2, jalankan dari root proyek:
+
+```sh
+./scripts/docker.sh init
+nano .env.docker
+./scripts/docker.sh up
+```
+
+Isi `INKSPIRE_PUBLIC_ORIGIN=https://<IP-LAN-server>:8443`, `MAPIC_BASE_URL`, dan `MAPIC_SERVICE_TOKEN` di editor pilihan Anda. Port HTTP `INKSPIRE_PORT` default `4173` harus berbeda dari port HTTPS. `init` mempertahankan konfigurasi existing; `up` membangun image dan recreate semua service untuk memuat konfigurasi terbaru.
+
+Operasi berikut memakai [script yang sama](scripts/docker.sh):
+
+```sh
+./scripts/docker.sh status
+./scripts/docker.sh export-ca
+./scripts/docker.sh down
+```
+
+`export-ca` menghasilkan `inkspire-lan-root.crt`; verifikasi fingerprint dan pasang trust CA secara manual pada device, kemudian buka origin HTTPS yang diisi. `down` mempertahankan volume PKI. Menjalankan `up` kembali dapat memutus request generation aktif; tidak ada replay otomatis. Bantuan: `./scripts/docker.sh help`.
+
 ## Konfigurasi MaPic
 
 Canvas, draft, file, dan export dapat dipakai tanpa konfigurasi MaPic. Untuk mengaktifkan generation, salin `.env.example` menjadi `.env` lalu isi konfigurasi backend sendiri:
