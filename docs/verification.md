@@ -334,3 +334,31 @@ Seluruh run memakai port tinggi tidak baku (18443–18445) dan hanya mengirim si
 
 - Sign-off perangkat nyata: belum ada device/browser yang mempercayai CA dan menguji skenario manual di tabel sebelumnya. Status ini tidak berubah pada putaran ini.
 - `npm run test:lan` dan `lan:serve` tetap memerlukan executable Caddy pada PATH milik operator; suite default sengaja tidak bergantung padanya.
+
+
+## Packaging Docker LAN — 9 Oktober 2026
+
+Implementasi berada pada branch `feat/docker-deployment`. Target runtime adalah native Linux/rootful Docker Engine, berbeda dari device verifikasi macOS arm64. Source backend existing tidak diubah selain entry CLI healthcheck; deployment server belum dilakukan.
+
+| Pemeriksaan baru | Hasil aktual |
+| --- | --- |
+| Baseline `npm test` | 119 lulus, 17 files (0,974 detik) |
+| Red healthcheck | Lima assertion gagal karena entry belum tersedia; satu invalid-mode test sudah lulus; tidak dicatat sebagai suite berhasil |
+| Green healthcheck | Enam lulus (3,62 detik), termasuk timeout HTTP stalled |
+| `npm run typecheck` | Client/server/tests exit 0; tests diulang setelah runtime probe harness ditambahkan, exit 0 |
+| `npm test` final | 125 lulus, 18 files (3,94 detik) |
+| `npm run build` | Exit 0, frontend dan compiled companion/healthcheck dihasilkan |
+| Compose fixture | v2.40.3-desktop.1, `config --quiet` exit 0; resolved JSON diperiksa dalam memori, tidak dicetak |
+| Compose boundary | Ketiga service host network, UID 1000/read-only/init/cap drop; hanya app menerima token sentinel; origin kosong ditolak; proxy menunggu config/app readiness |
+| `npm run test:lan` | Exit 0, Caddy 2.11.7, verified TLS/hostname, guards, assets/private paths dan mock generation |
+| Production `test:e2e` | 45 lulus + satu skip existing, 57,7 detik; mock terisolasi |
+| `npm run test:docker` pada macOS | Exit 1 yang diharapkan: native Linux diperlukan, sebelum Docker/listener/fixture; bukan bukti Linux gate berhasil |
+| Dokumen dan Git ignore | Links/fences/headings valid, runtime .env.docker dan export root certificate ignored; plan tetap ignored |
+
+Compose validation memakai env fixture dengan sentinel saja dan override `INKSPIRE_ENV_FILE`; tidak membaca `.env`/`.env.docker` operator. Fixture syntax dibersihkan setelah selesai. Tidak ada generation GPU nyata, trust-store installation, server mutation, push/merge, atau startup Docker daemon dalam sesi ini. Build hanya memiliki warning chunk native besar dan ineffective dynamic import existing; browser harness memiliki warning NO_COLOR/FORCE_COLOR existing.
+
+### Checkpoint yang masih pending
+
+Build image Linux dan probe Node 24/non-root/Sharp/compiled paths belum dijalankan. `npm run test:docker` telah dibuat untuk menguji actual host interface, volume UID bootstrap, HTTPS/CA, mock T2I/I2I, satu slot, token isolation, stop dan CA retention, tetapi belum mendapat runtime Linux yang diotorisasi. Test container tidak dapat diganti oleh syntax Compose atau gate Caddy loopback macOS. Deployment server dan sign-off browser/device nyata juga pending; MaPic nyata memerlukan instruksi terpisah.
+
+Operasi dan rollback: [deployment Docker](docker-deployment.md). Native execution report: `temp/prompt/inkspire-docker-deployment-execution-report.md` (ignored). Historical spec/plan tetap dipertahankan; checkpoint ini mencatat progres tanpa mengubah catatan perencanaan.

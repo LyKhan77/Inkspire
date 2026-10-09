@@ -42,6 +42,16 @@ flowchart LR
 
 MaPic merupakan layanan terpisah yang dapat diakses melalui jaringan. Token service hanya berada di environment companion. Browser tidak menerima token atau menentukan URL downstream melalui request.
 
+## Deployment Docker LAN
+
+Packaging server memakai `Dockerfile` multi-stage Node 24 Linux: frontend dan companion dibangun dari lockfile, dependency production dipasang pada ABI yang sama, lalu seluruh `dist-server` termasuk modul kontrak bersama disalin ke runtime non-root. `.dockerignore` membatasi context ke build inputs; environment, PKI, temp dan workspace pribadi tidak masuk image.
+
+`compose.yaml` menjalankan tiga service dengan host networking native Linux: `lan-config` menulis konfigurasi sekali jalan menggunakan validator/renderer LAN existing, `app` tetap bind loopback dan menyajikan frontend/API, serta `proxy` memakai image Caddy resmi pada satu IP/port HTTPS eksplisit. Proxy menunggu config selesai dan companion healthy. Proses non-root memakai filesystem read-only, tmpfs sementara dan capability drop; namespace network berbagi stack host.
+
+`.env.docker` hanya menjadi runtime env file `app`. Penulis config menerima port/origin saja dan proxy menerima XDG paths saja; token/URL MaPic tidak diteruskan ke keduanya. Volume `lan-state` milik UID/GID 1000 menyimpan Caddyfile/PKI/XDG dan dipertahankan saat stop/recreate. Draft tetap IndexedDB per browser/origin; tidak ada database server atau sync baru.
+
+Healthcheck CLI `server/docker-healthcheck.ts` mengirim HEAD `/` ke loopback dengan Host canonical dan timeout terbatas. Ini memeriksa companion/static serving tanpa endpoint baru atau MaPic call. TLS proxy dan readiness service diperiksa terpisah; internal CA tetap memerlukan trust manual. [Panduan Docker](docs/docker-deployment.md) mencakup transfer, konfigurasi, mock gate Linux dan rollback. Gate container serta acceptance server/device masih pending.
+
 ## Stack dan struktur
 
 Versi dependency dipin di [package.json](package.json) dan [package-lock.json](package-lock.json). Runtime proyek adalah Node.js `24.x`.

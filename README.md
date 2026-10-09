@@ -45,6 +45,12 @@ Vite berjalan sebagai middleware pada companion, sehingga canvas, draft, dan API
 
 Device lain pada Wi-Fi/LAN yang sama dapat membuka Inkspire production melalui `https://<IP-LAN-host>:8443`. Companion tetap loopback; Caddy memegang satu listener HTTPS pada IP interface eksplisit dengan CA internal lokal yang trust device dipasang manual. Ikuti [panduan LAN HTTPS](docs/network-access.md) untuk setup, sertifikat, troubleshooting, dan rollback.
 
+## Server Docker LAN
+
+Packaging production tersedia untuk **Docker Engine Linux native** pada LAN MaPic. Compose menjalankan companion loopback, penulis konfigurasi sekali jalan, dan proxy Caddy non-root dengan satu origin HTTPS. Konfigurasi runtime memakai `.env.docker`; token hanya masuk companion. Draft tetap per browser, dan trust CA internal tetap dipasang manual pada device.
+
+Ikuti [panduan deployment Docker](docs/docker-deployment.md) untuk transfer source, build, start/stop, sertifikat, dan rollback. Gate container Linux serta acceptance server/device masih pending; hasil tes lokal tidak membuktikan deployment. Development tetap memakai `npm run dev`.
+
 ## Konfigurasi MaPic
 
 Canvas, draft, file, dan export dapat dipakai tanpa konfigurasi MaPic. Untuk mengaktifkan generation, salin `.env.example` menjadi `.env` lalu isi konfigurasi backend sendiri:

@@ -6,6 +6,10 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 
 ### Added
 
+- Packaging Docker LAN: image Node 24 Linux multi-stage, build context allowlist, runtime non-root, dan Compose `lan-config`/`app`/`proxy` dengan host networking. Companion tetap loopback; token MaPic hanya pada environment runtime `app`, dan PKI berada pada volume retained.
+- CLI healthcheck companion dengan Host kanonis, timeout terbatas dan error generik tanpa endpoint/generation baru; enam regression mencakup readiness, Host, mode, config dan stalled request.
+- Harness opt-in `npm run test:docker` untuk TLS, guard, mock T2I/I2I, satu slot, isolasi token, stop dan CA retention pada Linux. Gate container Linux belum dijalankan; deployment server/device tetap pending. Operasi dan rollback: [panduan Docker](docs/docker-deployment.md).
+
 - **Akses LAN HTTPS opsional** pada mode production: `INKSPIRE_PUBLIC_ORIGIN` menerima satu canonical origin HTTPS dengan IPv4 privat RFC 1918 dan port eksplisit `1024..65535`; hostname, IPv6, alamat publik, HTTP, credential, query/fragment, dan bentuk IP noncanonical ditolak. Origin tersebut dipakai sebagai canonical origin tunggal companion tanpa mengubah bind loopback, dan digabung dengan `--dev` akan gagal saat startup.
 - CLI proxy opsional `npm run lan:config` dan `npm run lan:serve` menuliskan Caddyfile dari konfigurasi backend yang sama lalu menjalankan `caddy run` di foreground dengan bind IP interface eksplisit, CA internal, admin/persist/redirect otomatis mati, dan environment child tanpa kredensial MaPic. Config dan PKI lokal tinggal pada `.inkspire-lan/` yang dikecualikan dari Git.
 - Panduan operator [docs/network-access.md](docs/network-access.md) untuk setup, trust sertifikat manual, storage draft per origin, slot generation bersama, troubleshooting, dan rollback.
@@ -71,6 +75,13 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 
 - Caddyfile hasil `renderCaddyfile` menambah site HTTPS fallback pada IP dan port yang sama dengan `respond 403`. Sebelumnya, request berauthentik dengan HTTP Host non-canonical tidak cocok dengan site kanonis dan menerima respons kosong 200 dari Caddy; kini host asing ditolak eksplisit oleh proxy tanpa mencapai companion. Site kanonis dan fallback tetap berbagi satu listener — tidak ada wildcard bind, port baru, atau fallback HTTP.
 - Gate `npm run test:lan` memakai fixture IP literal `127.0.0.1` (bentuk yang dipakai device LAN) dan menegaskan satu listener dari `caddy adapt`, penolakan 403 untuk Origin/Host invalid termasuk rute frontend, penolakan handshake untuk SNI asing, penolakan CA tak-tepercaya, path privat, asset statis, dan satu call generation mock. Harness mem-pin SNI kosong karena Node menurunkan SNI dari header Host; tanpa pin, kasus Host berubah menjadi kegagalan nama sertifikat dan tidak menguji routing proxy.
+
+### Verified — 2026-10-09 (Packaging Docker LAN)
+
+- Typecheck client/server/tests dan build lulus; 125 unit/HTTP tests pada 18 files lulus, termasuk enam regression healthcheck dengan red/green terverifikasi.
+- Compose v2.40.3 menerima fixture `config --quiet`; hasil resolved config diperiksa untuk runtime non-root/read-only, host networking, isolasi token, startup dependencies dan origin wajib. Tidak memakai env operator atau daemon startup.
+- Gate Caddy 2.11.7 pada loopback dengan TLS/hostname terverifikasi dan mock generation lulus; production E2E 45 lulus, satu skip existing (57,7 detik).
+- `test:docker` menolak macOS sebelum Docker/listener/fixture. Build image, Linux container gate, MaPic nyata dan server/device acceptance belum dijalankan; tidak ada deployment/push atau service background baru.
 
 ## 0.1.0 — 2026-10-07
 

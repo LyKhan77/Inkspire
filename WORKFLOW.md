@@ -60,6 +60,21 @@ npm run lan:serve
 
 Tanpa companion di terminal 1, Caddy tidak memiliki upstream dan aplikasi menjawab 502. Hentikan masing-masing proses dengan `Ctrl+C` di terminalnya. Origin LAN hanya berlaku untuk mode production dan selalu memerlukan CA internal Caddy yang dipasang manual pada device. Detail setup, trust, storage per origin, troubleshooting, dan rollback ada di [panduan LAN HTTPS](docs/network-access.md).
 
+## Server Docker LAN
+
+Deployment server memakai [panduan Docker LAN](docs/docker-deployment.md). Targetnya Docker Engine Linux native dengan Compose, satu IPv4 privat eksplisit, dan MaPic yang reachable dari host. Salin `deploy/docker.env.example` ke `.env.docker` pada server; env ini runtime-only dan hanya `app` menerima kredensial.
+
+```sh
+docker compose -p inkspire --env-file .env.docker config --quiet
+docker compose -p inkspire --env-file .env.docker build lan-config
+docker compose -p inkspire --env-file .env.docker up -d
+docker compose -p inkspire --env-file .env.docker ps --all
+```
+
+Verifikasi `lan-config` exit 0, `app` healthy, dan HTTPS dengan CA/hostname validation. Trust CA device tetap manual. Update environment membutuhkan recreate seluruh service, termasuk penulis config; restart saja tidak cukup. Stop dengan `docker compose -p inkspire --env-file .env.docker down` tanpa `--volumes` agar CA retained. Draft dipindahkan antarorigin melalui export/import `.excalidraw`.
+
+`npm run test:docker` opt-in pada Linux dengan `INKSPIRE_DOCKER_TEST_IP` dan `INKSPIRE_DOCKER_TEST_IMAGE` eksplisit. Harness memakai env fixture, project/volume unik dan mock MaPic; tidak memakai GPU nyata atau env operator. Gate container Linux dan acceptance server/device masih pending. Production host tidak membutuhkan npm/Node host.
+
 ## Alur workspace
 
 1. Buka aplikasi. Draft terakhir dipulihkan sebelum editor siap digunakan.

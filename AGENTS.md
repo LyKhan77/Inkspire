@@ -12,6 +12,8 @@ Browser menjalankan editor React. Companion Node.js bind ke `127.0.0.1:4173` sec
 
 Desain sistem lengkap: [ARCHITECTURE.md](ARCHITECTURE.md).
 
+Packaging server Docker LAN tersedia pada `compose.yaml` dan `Dockerfile`, memakai Docker Engine Linux native serta host networking untuk mempertahankan companion loopback. Konfigurasi runtime `.env.docker` hanya memberi token MaPic ke `app`; proxy/config writer tidak menerima kredensial. Volume retained menyimpan PKI, sedangkan draft tetap per browser. Panduan: [docs/docker-deployment.md](docs/docker-deployment.md). Gate container Linux dan sign-off server/device masih pending.
+
 ## 2. Tech Stack
 
 Versi berikut mengikuti manifest saat dokumen dibuat. Periksa [package.json](package.json) dan [package-lock.json](package-lock.json) untuk versi aktual; jangan mengubah pin tanpa memeriksa kompatibilitas.
@@ -67,6 +69,8 @@ docs/
     plans/                Lokasi plan baru; dikecualikan dari Git
     specs/                Lokasi spesifikasi baru
 ARCHITECTURE.md            Arsitektur implementasi
+Dockerfile / compose.yaml Packaging production Linux LAN
+deploy/                   Template runtime environment bebas kredensial
 WORKFLOW.md                Alur penggunaan, development, dan verifikasi
 CHANGELOG.md               Riwayat perubahan
 ```
@@ -88,6 +92,7 @@ Prefix seluruh perintah shell yang dijalankan agent dengan `rtk`. Gunakan `rtk p
 | Tulis Caddyfile LAN | `rtk npm run lan:config` |
 | Jalankan proxy LAN foreground | `rtk npm run lan:serve` |
 | Gate Caddy HTTPS terisolasi | `rtk npm run test:lan` |
+| Gate Docker Linux opt-in | `rtk npm run test:docker` (IP LAN dan image eksplisit) |
 | Instal browser tes | `rtk proxy npx playwright install chromium` |
 | E2E development | `rtk npm run test:e2e` |
 | E2E compiled production | `rtk proxy env INKSPIRE_TEST_MODE=production npm run test:e2e` |
@@ -153,6 +158,8 @@ Lisensi repository adalah [Apache-2.0](LICENSE), dipilih pengguna. Notice depend
 - **DO NOT commit the Plans.** Direktori plan baru dan direktori plan lama dikecualikan dalam `.gitignore`. Jangan memaksa menambahkan plan dengan `git add -f`.
 
 ### Boundary aplikasi dan layanan
+
+- Docker server menargetkan native Linux/rootful Engine dengan host networking; jangan menganggap Docker Desktop/rootless telah terverifikasi. Gunakan `--env-file .env.docker` untuk interpolation dan runtime env hanya pada `app`; config writer/proxy tidak menerima MaPic credentials. Healthcheck CLI tidak memanggil GPU. `test:docker` memakai project/mock/env terisolasi dan membutuhkan IP/image eksplisit; stop production mempertahankan volume PKI dan tidak menghentikan container lain.
 
 - Simpan `MAPIC_BASE_URL` dan `MAPIC_SERVICE_TOKEN` hanya pada backend. `.env.example` harus bebas nilai operator; `.env` tidak boleh masuk Git atau bundle browser.
 - Pertahankan companion loopback, validasi origin/body/gambar, satu request aktif, dan error tersanitasi. Jangan menambahkan retry otomatis, job/status/admin endpoint, atau cancel GPU tanpa perubahan desain yang disetujui.

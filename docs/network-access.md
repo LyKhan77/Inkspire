@@ -4,6 +4,10 @@ LAN memakai hasil build production. Companion tetap HTTP loopback; Caddy menanga
 
 Cakupan otomatis dan cakupan manual dipisah. Otomatis pada loopback dengan executable Caddy milik operator: render/validasi config, guard Origin/Host, jalur TLS tanpa SNI dengan verifikasi CA dan hostname, penolakan CA asing, path privat, asset frontend, dan generation mock (`npm run test:lan`; bukan bagian dari `npm test` karena membutuhkan binary). Perilaku foreground dan penghentian `lan:serve` dengan Ctrl+C juga sudah dibuktikan pada proses milik tes. Yang **belum** tercakup otomatis: trust certificate dan penggunaan pada device nyata; sign-off perangkat dicatat terpisah pada [verification](verification.md) dan tetap menjadi tindakan manual operator.
 
+## Packaging Docker server
+
+Untuk server Linux, [mode Docker](docker-deployment.md) memakai canonical origin, validator interface dan renderer Caddy yang sama. Companion tetap loopback karena ketiga service memakai host networking native. Compose menyediakan image production, config writer sekali jalan dan proxy resmi; token MaPic hanya pada `app`. PKI berada pada named volume retained, bukan folder development host. Trust device tetap manual dan draft tetap per origin browser. Gate container Linux serta acceptance server/device belum selesai.
+
 ## Konfigurasi host
 
 Pastikan executable Caddy dengan modul standar tersedia di PATH. Cek `caddy version`; instalasi mengikuti [caddyserver.com/docs/install](https://caddyserver.com/docs/install). Script Inkspire tidak memasang Caddy atau sertifikat OS otomatis.
