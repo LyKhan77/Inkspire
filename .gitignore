@@ -5,6 +5,7 @@ node_modules/
 dist/
 dist-server/
 .inkspire-lan/
+/inkspire-lan-root.crt
 test-results/
 playwright-report/
 output/

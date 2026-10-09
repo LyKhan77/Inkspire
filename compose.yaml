@@ -1,0 +1,64 @@
+name: inkspire
+
+x-runtime: &runtime
+  network_mode: host
+  user: "1000:1000"
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  tmpfs: ["/tmp:rw,nosuid,nodev,size=64m,mode=1777"]
+  stop_grace_period: 20s
+
+services:
+  lan-config:
+    <<: *runtime
+    image: ${INKSPIRE_IMAGE:-inkspire:docker-local}
+    build: .
+    command: ["node", "dist-server/server/lan-cli.js", "--write-only"]
+    environment:
+      NODE_ENV: production
+      INKSPIRE_PORT: ${INKSPIRE_PORT:-4173}
+      INKSPIRE_PUBLIC_ORIGIN: ${INKSPIRE_PUBLIC_ORIGIN:?Set the canonical HTTPS LAN origin}
+    volumes: ["lan-state:/app/.inkspire-lan"]
+    restart: "no"
+
+  app:
+    <<: *runtime
+    image: ${INKSPIRE_IMAGE:-inkspire:docker-local}
+    env_file: ${INKSPIRE_ENV_FILE:-.env.docker}
+    environment:
+      NODE_ENV: production
+      INKSPIRE_PORT: ${INKSPIRE_PORT:-4173}
+      INKSPIRE_PUBLIC_ORIGIN: ${INKSPIRE_PUBLIC_ORIGIN:?Set the canonical HTTPS LAN origin}
+    healthcheck:
+      test: ["CMD", "node", "dist-server/server/docker-healthcheck.js", "companion"]
+      interval: 10s
+      timeout: 6s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  proxy:
+    <<: *runtime
+    image: caddy:2.11.7@sha256:f2a1290d0463aad60660d4ec134943f183ee2a5f6c3eb7bf32dd984f2f020772
+    working_dir: /app
+    entrypoint: ["caddy"]
+    command: ["run", "--config", "/app/.inkspire-lan/Caddyfile", "--adapter", "caddyfile"]
+    environment:
+      XDG_DATA_HOME: /app/.inkspire-lan/xdg-data
+      XDG_CONFIG_HOME: /app/.inkspire-lan/xdg-config
+    volumes: ["lan-state:/app/.inkspire-lan"]
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=64m,mode=1777
+      - /config:rw,nosuid,nodev,size=8m,uid=1000,gid=1000
+      - /data:rw,nosuid,nodev,size=8m,uid=1000,gid=1000
+    depends_on:
+      lan-config:
+        condition: service_completed_successfully
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  lan-state:
