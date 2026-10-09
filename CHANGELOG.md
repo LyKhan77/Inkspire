@@ -67,6 +67,11 @@ Perubahan penting Inkspire dicatat di sini. Versi package saat ini `0.1.0`; peru
 - Sinyal antrean hold yang kosong tidak dipakai sebagai pengganti; itu hanya membuktikan callback sudah dijadwalkan, bukan controller selesai. Tidak ada perubahan source aplikasi pada putaran ini.
 - Batas toleransi `redo` pada dokumentasi ditulis ulang sebagai fakta terukur (delta `arrow.width` 3,002894287382631 px pada siklus pertama, tanpa delta tambahan di atas `1e-9` pada siklus kedua dan ketiga, Keenam panah tetap `points[0] === [0, 0]`), bukan klaim bahwa penyesuaian mustahil dihilangkan dari sisi aplikasi.
 
+### Fixed — 2026-10-09 (Review LAN HTTPS)
+
+- Caddyfile hasil `renderCaddyfile` menambah site HTTPS fallback pada IP dan port yang sama dengan `respond 403`. Sebelumnya, request berauthentik dengan HTTP Host non-canonical tidak cocok dengan site kanonis dan menerima respons kosong 200 dari Caddy; kini host asing ditolak eksplisit oleh proxy tanpa mencapai companion. Site kanonis dan fallback tetap berbagi satu listener — tidak ada wildcard bind, port baru, atau fallback HTTP.
+- Gate `npm run test:lan` memakai fixture IP literal `127.0.0.1` (bentuk yang dipakai device LAN) dan menegaskan satu listener dari `caddy adapt`, penolakan 403 untuk Origin/Host invalid termasuk rute frontend, penolakan handshake untuk SNI asing, penolakan CA tak-tepercaya, path privat, asset statis, dan satu call generation mock. Harness mem-pin SNI kosong karena Node menurunkan SNI dari header Host; tanpa pin, kasus Host berubah menjadi kegagalan nama sertifikat dan tidak menguji routing proxy.
+
 ## 0.1.0 — 2026-10-07
 
 ### Added

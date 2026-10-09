@@ -2,7 +2,7 @@
 
 LAN memakai hasil build production. Companion tetap HTTP loopback; Caddy menangani HTTPS pada satu IP privat host. Ini mode optional untuk jaringan tepercaya, tanpa login atau sinkronisasi canvas.
 
-Dukungan ini sudah terimplementasi dan otomatis terverifikasi sampai batas loopback; sign-off perangkat nyata dicatat terpisah pada [verification](verification.md).
+Cakupan otomatis dan cakupan manual dipisah. Otomatis pada loopback dengan executable Caddy milik operator: render/validasi config, guard Origin/Host, jalur TLS tanpa SNI dengan verifikasi CA dan hostname, penolakan CA asing, path privat, asset frontend, dan generation mock (`npm run test:lan`; bukan bagian dari `npm test` karena membutuhkan binary). Perilaku foreground dan penghentian `lan:serve` dengan Ctrl+C juga sudah dibuktikan pada proses milik tes. Yang **belum** tercakup otomatis: trust certificate dan penggunaan pada device nyata; sign-off perangkat dicatat terpisah pada [verification](verification.md) dan tetap menjadi tindakan manual operator.
 
 ## Konfigurasi host
 

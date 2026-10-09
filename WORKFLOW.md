@@ -41,15 +41,24 @@ Canvas, draft, import/save, dan export tetap dapat digunakan ketika konfigurasi 
 
 ### Akses LAN opsional
 
-Untuk device lain pada LAN yang sama, isi `INKSPIRE_PUBLIC_ORIGIN` dengan HTTPS dan IPv4 privat host, lalu jalankan dua proses production:
+Untuk device lain pada LAN yang sama, isi `INKSPIRE_PUBLIC_ORIGIN` dengan HTTPS dan IPv4 privat host, dan pastikan executable `caddy` ada pada PATH. Persiapkan build dan konfigurasi lebih dulu pada satu terminal:
 
 ```sh
 npm run build
 npm run lan:config   # menulis Caddyfile dari konfigurasi yang sama
-npm run lan:serve    # menjalankan caddy run di foreground
 ```
 
-Origin LAN hanya berlaku untuk mode production dan selalu memerlukan CA internal Caddy yang dipasang manual pada device. Detail setup, trust, storage per origin, troubleshooting, dan rollback ada di [panduan LAN HTTPS](docs/network-access.md).
+Setelah itu jalankan **dua** proses production terpisah. CLI `lan:serve` hanya menjalankan proxy Caddy dan **tidak** memulai companion:
+
+```sh
+# Terminal 1
+npm start
+
+# Terminal 2
+npm run lan:serve
+```
+
+Tanpa companion di terminal 1, Caddy tidak memiliki upstream dan aplikasi menjawab 502. Hentikan masing-masing proses dengan `Ctrl+C` di terminalnya. Origin LAN hanya berlaku untuk mode production dan selalu memerlukan CA internal Caddy yang dipasang manual pada device. Detail setup, trust, storage per origin, troubleshooting, dan rollback ada di [panduan LAN HTTPS](docs/network-access.md).
 
 ## Alur workspace
 

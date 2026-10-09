@@ -225,7 +225,9 @@ Implementasi pada branch `feat/network-access`. Hasil di bawah adalah gate otoma
 
 Unit LAN tambahan: `tests/network-origin.test.ts` 4 tests, `tests/network-companion.test.ts` 4 tests, `tests/network-config.test.ts` 7 tests. Suite default tidak memerlukan executable Caddy.
 
-### Gate Caddy nyata — belum dijalankan
+### Gate Caddy nyata — belum dijalankan (8 Oktober 2026; catatan historis)
+
+> Status ini adalah hasil sesi 8 Oktober dan tidak lagi menjadi status terkini. Gate Caddy nyata dijalankan pada 9 Oktober 2026 setelah perbaikan review; lihat bagian **Perbaikan review LAN HTTPS — 9 Oktober 2026** di bawah.
 
 `rtk npm run test:lan` **tidak dapat dijalankan** pada mesin ini: executable `caddy` tidak ada di PATH (`which caddy` kosong). Gate gagal cepat dan eksplisit dengan pesan `Caddy executable required for test:lan` dan exit 1, sesuai kontrak plan; fixture dihapus bersih dan tidak ada listener tersisa. Script Inkspire tidak memasang binary global secara otomatis, sehingga instalasi Caddy adalah keputusan operator.
 
@@ -264,9 +266,71 @@ Belum ada device/browsers yang menguji mode LAN. Skenario yang tersisa:
 | Export A → import B | Scene dan aset tetap editable; tidak ada auto-sync |
 | Flowchart → preview → insertion → undo/redo | Bentuk dan konektor native normal |
 | Upload PNG/JPEG lalu generate dengan mock | Referensi ter-hash, preview dan insertion benar |
-| Dua browser generate saat mock di-hold | Keduanya menerima 409; hanya satu call mock sampai release |
+| Dua browser generate saat mock di-hold | Request pertama tetap pending selama mock di-hold; request kedua menerima 409 `REQUEST_ACTIVE`; setelah release, request pertama menerima 200. Hanya satu call mock sebelum release |
 | Bahasa dan ikon Ink | Pergantian bahasa/tema berfungsi; canvas tetap ada |
 | Origin/IP salah dan URL sensitif | Ditolak; data privat tidak disajikan |
 | Kembali ke localhost setelah stop | Runtime pulih; draft tiap origin tetap tersimpan |
 
 Nilai IP interface, port companion, dan port proxy harus dipilih pengguna, begitu juga pemasangan trust certificate pada device. Harness `tests/start-lan-acceptance.ts` menyiapkan instance terisolasi dengan CA acceptance sendiri; CA acceptance berbeda dari CA production dan trust device tetap tindakan manual.
+
+## Perbaikan review LAN HTTPS — 9 Oktober 2026
+
+Review 8 Oktober menyatakan REQUEST CHANGES: gate Caddy nyata gagal karena HTTP Host non-canonical menerima respons kosong 200 dari Caddy (R1), dokumentasi mengklaim gate sudah terverifikasi (R2), dan WORKFLOW tidak memulai companion (R3). Catatan 8 Oktober di atas dipertahankan sebagai hasil historis; bagian ini mencatat state setelah perbaikan.
+
+### Perilaku yang ditambahkan
+
+`renderCaddyfile` menulis site fallback `https://:<port>` dengan `bind` IP LAN yang sama dan `respond 403`, di bawah site kanonis yang tetap `reverse_proxy`. Hasil `caddy adapt` untuk config operator: satu server `srv0` dengan `listen: ["<ip>:<port>"]`, route pertama matcher `host: [<ip>]` menuju `reverse_proxy`, route kedua tanpa matcher menuju `static_response` 403. Tidak ada wildcard bind, port tambahan, atau fallback HTTP.
+
+### Root cause kegagalan gate, dan bukti pemisahan lapisan
+
+- Tanpa fallback, Caddy menjawab Host non-kanonis dengan 200 kosong. Ini kegagalan proxy (bukan bypass generation): request tidak pernah mencapai MaPic.
+- Setelah fallback ditambahkan, harness sempat gagal dengan `write EPROTO ... tlsv1 alert internal error`. Probe terisolasi membuktikan penyebabnya ada di klien Node: `https.request` menurunkan SNI dari header Host ketika `servername` tidak di-pin (`sni="evil.example"` pada koneksi ke IP literal), sehingga handshake gagal karena Caddy tidak punya certificate untuk nama itu — bukan uji routing proxy. Koneksi dengan SNI kosong dan Host asing menerima 403, dan client independen `curl -H 'Host: evil.example'` juga menerima 403 (exit 0) dengan verifikasi CA dan hostname.
+- Harness kini mem-pin SNI kosong (perilaku browser pada IP literal) dan menambahkan assertion terpisah: SNI asing harus gagal pada handshake (`rejects`, tanpa respons HTTP sama sekali). `rejectUnauthorized` tetap `true`, `checkServerIdentity` tetap memeriksa cert `127.0.0.1`, dan tidak ada assertion yang menerima 200 bebas.
+
+### Gate Caddy nyata — lulus pada loopback (9 Oktober 2026)
+
+| Gate | Hasil |
+| --- | --- |
+| `rtk proxy env PATH="<caddy-dir>:$PATH" npm run test:lan` | Exit 0 — `PASS: Caddy config, verified TLS, origin guards, private paths and mock generation`, 0,66 detik |
+| Run berurutan tambahan (4x, termasuk via `node --import tsx`) | Exit 0 semua; tidak ada flake |
+| Assert satu listener (`caddy adapt` config operator + fixture) | Lulus — `["<ip>:<port>"]` tunggal untuk site kanonis dan fallback |
+| Assert 403 eksplisit untuk `Origin` asing, `Host` asing, `Origin` `http://` pada port HTTPS, dan `GET /` dengan `Host` asing | Lulus; frontend document tidak pernah disajikan ke Host asing |
+| Assert CA tak-tepercaya dan SNI asing | Lulus — `UNABLE_TO_GET_ISSUER_CERT_LOCALLY` dan kegagalan handshake |
+| Assert path privat 404, asset statis 200 melalui TLS, satu call mock generation | Lulus |
+| Tanpa Caddy pada PATH (`rtk npm run test:lan`) | Exit 1 dengan `Caddy executable required for test:lan`; fixture dibersihkan |
+
+Versi dan integritas runtime: Node `v24.17.0` (`/Users/leekhan/.nvm/versions/node/v24.17.0/bin/node`), Caddy `v2.11.7 h1:yj0Y4fYZGPkSvibBJ1sTWE33xC0fxztVyXEW5iIdUT4=`. Binary sementara dipakai dari direktori kerja review (`/private/tmp/inkspire-caddy-tool/caddy`, SHA-256 `0d746e47f39d9706883b3633bf419feb25973e6caaa8eabbf5b44421d59e3973`); archive `caddy_2.11.7_mac_arm64.tar.gz` SHA-256 `cda3030e5d5b13eb9f0b6fb541037f633bddd958c070c5f561d7a5cccb581665` dan hasil ekstraksi byte-identik dengan binary yang dijalankan. Tidak ada instalasi global, tidak ada perubahan trust store OS, tidak ada firewall, tidak ada `.env` pengguna yang dibaca.
+
+Harness juga memperbaiki dua kerentanan flake: pembacaan CA sekarang menunggu file muncul (sebelumnya bisa `ENOENT` karena Caddy membuat CA secara asinkron), dan guard `spawnError`/exit code digabung ke satu fungsi agar poll loop tidak balapan dengan state child.
+
+### Negative control — 9 Oktober (working diff, dipulihkan byte-exact)
+
+| Mutasi sementara | Hasil |
+| --- | --- |
+| Hapus blok fallback `https://:<port>` dari `server/lan.ts` | `test:lan` exit 1 — `invalid Host must be rejected explicitly, received 200`, tepat pada temuan review |
+| `bind` fallback diganti `0.0.0.0` | `test:lan` exit 1 — `canonical site and fallback must share one LAN listener`, actual `["0.0.0.0:<port>", "<ip>:<port>"]` |
+| Hapus blok fallback, jalankan unit | `tests/network-config.test.ts` gagal 1 test pada assertion `https://:8443 {` |
+
+Setiap mutasi langsung dipulihkan; SHA-256 `server/lan.ts` dan `tests/network-caddy.ts` diverifikasi identik sebelum dan sesudah (RESTORE_EXACT), dan tidak ada hasil mutasi yang di-commit.
+
+### Bukti runtime CLI foreground/shutdown — 9 Oktober
+
+Sebelumnya klaim shutdown hanya bersandar pada cleanup child di harness TLS. Empat run CLI aktual kini tercatat, semuanya proses milik tes, environment eksplisit tanpa `.env` (kompanion dijalankan langsung dari `dist-server`), MaPic diarahkan ke loopback tertutup atau mock repo:
+
+| Run | Susunan | Hasil |
+| --- | --- | --- |
+| 1 | `lan:serve` tanpa companion, listener LAN `192.168.2.39:18443` | `GET /` → 502 dengan `server: Caddy`; membuktikan companion harus berjalan lebih dulu (R3). SIGINT → CLI exit 0 dalam 0,5 s; 0 proses Caddy tersisa; 0 listener |
+| 2 | companion (terminal 1, cwd repo agar `dist` terbaca) + `lan:serve` (terminal 2, cwd fixture terisolasi) | `GET /` → 200 document; `Host: evil.example` → 403 `server: Caddy`; path privat → 404; font → 200; SIGINT kedua proses → exit 0, listener lepas |
+| 3 | sama, endpoint API | `POST /api/ai/generate` Origin asing → 403 `LOCAL_ONLY`; Host asing → 403 kosong dari Caddy; `Origin http://` → 403 `LOCAL_ONLY`; token tidak muncul di log (0 occ) |
+| 4 | companion + mock MaPic repo (loopback) | `POST /api/ai/generate` origin kanonis → 200 dengan `b64_json`, satu call ke mock dengan `Authorization` Bearer, 0 kebocoran token ke client |
+
+Seluruh run memakai port tinggi tidak baku (18443–18445) dan hanya mengirim sinyal ke PID yang dimulai run tersebut; setelah tiap run `lsof` dan `pgrep` menunjukkan 0 listener dan 0 proses Caddy. Listener LAN dibuka selama beberapa detik sesuai desain `lan:serve` yang diuji, tanpa trust OS dan tanpa MaPic nyata. Run 2 juga mengoreksi asumsi test awal: companion melayani `dist` relatif terhadap direktori kerja, sehingga `npm start` memang harus dari root repo seperti ditulis di WORKFLOW.
+
+### Suite regresi pada state ini
+
+`rtk npm run typecheck` exit 0; `rtk npm test` exit 0 — 119 tests, 17 files (~1,0 detik); `rtk npm run build` exit 0; `rtk npm run test:lan` exit 0 (Caddy pada PATH); `rtk npm run test:e2e` exit 0 — 46 tests, 1,6 menit; `rtk proxy env INKSPIRE_TEST_MODE=production npm run test:e2e` exit 0 — 45 lulus + 1 di-skip, 57,4 detik; `rtk git diff --check` exit 0. Unit LAN kini 8 tests di `tests/network-config.test.ts`; positive CLI test memakai klasifikasi RFC 1918 (`10/8`, `172.16/12`, `192.168/16`) dan `test.skipIf` agar tidak tercatat lulus tanpa assertion ketika tidak ada interface privat.
+
+### Masih pending
+
+- Sign-off perangkat nyata: belum ada device/browser yang mempercayai CA dan menguji skenario manual di tabel sebelumnya. Status ini tidak berubah pada putaran ini.
+- `npm run test:lan` dan `lan:serve` tetap memerlukan executable Caddy pada PATH milik operator; suite default sengaja tidak bergantung padanya.
